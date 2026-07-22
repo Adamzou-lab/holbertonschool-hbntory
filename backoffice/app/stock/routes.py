@@ -26,12 +26,13 @@ def list_stock():
 @login_required
 @role_required("common")
 def add_stock():
-    product_id = request.form.get("product_id", "").strip()
+    product_id = _parse_positive_int(request.form.get("product_id", ""))
     quantity = _parse_positive_int(request.form.get("quantity", ""))
 
-    if not product_id or quantity is None:
+    if product_id is None or quantity is None:
         flash(
-            "Identifiant produit et quantité (entier positif) requis.",
+            "Identifiant produit et quantité doivent être des entiers"
+            " positifs.",
             "error",
         )
         return redirect(url_for("stock.list_stock"))
@@ -52,12 +53,13 @@ def add_stock():
 @login_required
 @role_required("common")
 def remove_stock():
-    product_id = request.form.get("product_id", "").strip()
+    product_id = _parse_positive_int(request.form.get("product_id", ""))
     quantity = _parse_positive_int(request.form.get("quantity", ""))
 
-    if not product_id or quantity is None:
+    if product_id is None or quantity is None:
         flash(
-            "Identifiant produit et quantité (entier positif) requis.",
+            "Identifiant produit et quantité doivent être des entiers"
+            " positifs.",
             "error",
         )
         return redirect(url_for("stock.list_stock"))

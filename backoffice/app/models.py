@@ -82,7 +82,7 @@ class Stock(db.Model):
     branch_id = db.Column(
         db.Integer, db.ForeignKey("branches.id"), nullable=False
     )
-    product_id = db.Column(db.String(64), nullable=False)
+    product_id = db.Column(db.Integer, nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, default=_utcnow)
     updated_at = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)

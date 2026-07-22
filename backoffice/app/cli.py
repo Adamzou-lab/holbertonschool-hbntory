@@ -5,21 +5,26 @@ import click
 from app.extensions import db
 from app.models import ROLE_ADMIN, Branch, Stock, User
 
+# product_id = l'id numérique interne de l'API Produit externe (pas le sku).
+# Le MCP d'Erwan résout toujours le sku en id avant d'appeler le Backoffice
+# (cf. product_mcp_server/src/resolvers.py, "option C") : on stocke donc
+# directement l'id ici pour matcher ce contrat, sku en commentaire pour
+# rester lisible humainement.
 DEMO_STOCK = {
     "Branche Lyon": [
-        ("HB-LAP-1001", 12),
-        ("HB-KBD-4101", 30),
-        ("HB-MSE-4201", 25),
+        (1, 12),   # HB-LAP-1001
+        (6, 30),   # HB-KBD-4101
+        (8, 25),   # HB-MSE-4201
     ],
     "Branche Paris": [
-        ("HB-MON-2101", 8),
-        ("HB-SSD-7101", 14),
-        ("HB-CAM-5101", 5),
+        (3, 8),    # HB-MON-2101
+        (15, 14),  # HB-SSD-7101
+        (9, 5),    # HB-CAM-5101
     ],
     "Branche Marseille": [
-        ("HB-RTR-6101", 3),
-        ("HB-USB-7201", 40),
-        ("HB-CHR-9101", 6),
+        (12, 3),   # HB-RTR-6101
+        (17, 40),  # HB-USB-7201
+        (22, 6),   # HB-CHR-9101
     ],
 }
 

@@ -2,7 +2,7 @@
 {% block title %}Stock{% endblock %}
 {% block content %}
 <h1 class="page-title">Stock — {{ current_user.branch.name if current_user.branch else '' }}</h1>
-<div class="page-sub">Les noms de produits viendront de l'API Produit externe une fois branchée. Pour l'instant, identifiant produit brut.</div>
+<div class="page-sub">Les noms de produits viendront de l'API Produit externe une fois branchée. Pour l'instant, identifiant produit numérique brut (l'id interne de l'API Produit, pas le sku).</div>
 
 <div class="toolbar">
   <div class="count-pill">{{ stocks|length }} produit(s) en stock</div>
@@ -11,7 +11,7 @@
 <div class="card" style="margin-bottom:20px;">
   <div class="card-title" style="margin-bottom:10px;">Ajouter du stock</div>
   <form method="post" action="{{ url_for('stock.add_stock') }}" class="qty-form" style="flex-wrap:wrap;">
-    <input type="text" name="product_id" placeholder="product_id (ex: HB-LAP-1001)" required style="flex:1;min-width:180px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);">
+    <input type="number" name="product_id" min="1" placeholder="product_id (ex: 1)" required style="flex:1;min-width:180px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);">
     <input type="number" name="quantity" min="1" placeholder="Quantité" required>
     <button type="submit">Ajouter</button>
   </form>
