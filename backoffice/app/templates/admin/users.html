@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Utilisateurs{% endblock %}
+{% block content %}
+<h1 class="page-title">Utilisateurs</h1>
+<div class="page-sub">Common users de toutes les branches</div>
+
+<div class="toolbar">
+  <div class="count-pill">{{ users|length }} utilisateur(s)</div>
+  <a class="btn-primary" href="{{ url_for('admin.user_new') }}">+ Créer un utilisateur</a>
+</div>
+
+{% if not users %}
+<div class="empty-state">Aucun utilisateur pour l'instant.</div>
+{% else %}
+{% for u in users %}
+<div class="user-row">
+  <span>{{ u.email }}</span>
+  <span class="page-sub" style="margin:0;">{{ u.branch.name if u.branch else 'Aucune branche' }}</span>
+  <span class="status-tag {{ 'active' if u.is_active else 'inactive' }}">{{ 'Actif' if u.is_active else 'Désactivé' }}</span>
+  <div class="user-row-actions">
+    <a class="btn-secondary" href="{{ url_for('admin.user_edit', user_id=u.id) }}">Modifier</a>
+    <form method="post" action="{{ url_for('admin.user_toggle_active', user_id=u.id) }}">
+      <button class="btn-danger-text" type="submit">{{ 'Réactiver' if not u.is_active else 'Désactiver' }}</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}
