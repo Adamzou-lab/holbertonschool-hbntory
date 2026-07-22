@@ -21,10 +21,12 @@ def create_app(config_class=Config):
     from app.auth.routes import auth_bp
     from app.admin.routes import admin_bp
     from app.stock.routes import stock_bp
+    from app.internal.routes import internal_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(stock_bp)
+    app.register_blueprint(internal_bp)
 
     from app.cli import register_cli
 

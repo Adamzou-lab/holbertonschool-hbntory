@@ -1,6 +1,6 @@
 from functools import wraps
 
-from flask import abort
+from flask import abort, current_app, request
 from flask_login import current_user
 
 
@@ -17,6 +17,28 @@ def role_required(role):
         return wrapped
 
     return decorator
+
+
+def internal_token_required(view):
+    """Protège les routes /api/internal/... consommées par le serveur MCP.
+
+    Pas de session Flask-Login ici : c'est un appel machine-à-machine
+    (serveur MCP -> Backoffice), authentifié par un secret partagé envoyé
+    dans le header X-Internal-Token (cf. product_mcp_server/src/stock_client.py
+    côté Erwan). 403 (pas 401) sur un token manquant/invalide : c'est
+    exactement ce que son client attend pour le mapper en erreur claire
+    côté agent.
+    """
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        expected = current_app.config["BACKOFFICE_INTERNAL_TOKEN"]
+        provided = request.headers.get("X-Internal-Token")
+        if not provided or provided != expected:
+            abort(403)
+        return view(*args, **kwargs)
+
+    return wrapped
 
 
 def same_branch_required(get_branch_id_from_request):
