@@ -10,6 +10,27 @@ Erwan branchera le vrai agent (Task 4-5, `docs/decisions.md`) sur ce même contr
 - `POST /api/query` avec `{"question": "..."}` → `{"answer": "..."}` (200), ou
   `{"error": "..."}` (400) si `question` est vide/absente.
 
+## Types de questions supportées (Task 5.1)
+
+4 catégories, reprises directement du sujet et alignées sur les 4 tools stock du serveur MCP
+d'Erwan (`product_mcp_server/src/tools/stock_tools.py`) — quand le vrai agent remplacera le mock,
+chaque catégorie appellera le tool du même nom :
+
+| Catégorie | Exemple de question | Tool MCP qui répondra (à terme) |
+|---|---|---|
+| `product_details` | « Donne-moi les détails du produit HB-MON-2101. » | `get_product` |
+| `product_availability` | « Où trouver le produit HB-LAP-1001 ? » | `get_product_availability` |
+| `branch_inventory` | « Quels produits sont disponibles à la Branche Lyon ? » | `get_branch_inventory` |
+| `shopping_list` | « Si je veux 3 HB-LAP-1001 et 2 HB-MON-2101, quelle branche visiter ? » | `check_shopping_list` |
+
+**Hors périmètre** : toute question qui ne rentre dans aucune de ces 4 catégories reçoit un
+message explicite disant que ce n'est pas supporté, plutôt qu'une réponse inventée (exigence du
+sujet Task 5 : "the response should clearly state that the information is unavailable").
+
+La fonction `classify()` dans `app.py` fait ce classement (mots-clés simples pour l'instant côté
+mock). C'est cette même fonction qui devra, à terme, décider quel(s) tool(s) MCP appeler pour
+composer la réponse réelle.
+
 ## Lancer en local
 
 ```bash
