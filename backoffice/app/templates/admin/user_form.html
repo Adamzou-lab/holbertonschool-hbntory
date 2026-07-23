@@ -11,8 +11,12 @@
 <div class="form-card">
   <form method="post">
     <div class="field">
-      <label>Email</label>
+      <label>Email <span style="font-weight:400;text-transform:none;">(sert à se connecter)</span></label>
       <input type="email" name="email" value="{{ user.email if user else '' }}" required>
+    </div>
+    <div class="field">
+      <label>Nom affiché <span style="font-weight:400;text-transform:none;">(affiché à côté de la branche)</span></label>
+      <input type="text" name="username" value="{{ user.username if user else '' }}" required>
     </div>
     <div class="field">
       <label>Mot de passe {% if user %}<span style="font-weight:400;text-transform:none;">(laisser vide pour ne pas changer)</span>{% endif %}</label>

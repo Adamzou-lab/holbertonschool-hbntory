@@ -25,9 +25,9 @@
 
     <div class="sidebar-footer">
       <div class="account-chip">
-        <div class="account-avatar">{{ current_user.email[0]|upper }}</div>
+        <div class="account-avatar">{{ current_user.username[0]|upper }}</div>
         <div class="account-info">
-          <div class="account-name">{{ current_user.email }}</div>
+          <div class="account-name">{{ current_user.username }}</div>
           <div class="account-role">{{ 'Admin' if current_user.is_admin else current_user.branch.name if current_user.branch else '—' }}</div>
         </div>
       </div>
