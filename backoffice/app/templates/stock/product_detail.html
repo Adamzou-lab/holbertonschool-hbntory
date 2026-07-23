@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name if product else 'Produit #' ~ product_id }}{% endblock %}
+{% block content %}
+<a class="btn-secondary" href="{{ url_for('stock.list_stock') }}" style="margin-bottom:16px;display:inline-flex;">← Retour au stock</a>
+
+{% if not product %}
+<h1 class="page-title">Produit #{{ product_id }}</h1>
+<div class="empty-state">
+  Fiche produit indisponible (API Produit externe injoignable, ou produit
+  introuvable dans le catalogue).
+</div>
+{% else %}
+<div class="form-card" style="max-width:560px;">
+  <h1 class="page-title" style="margin-bottom:4px;">{{ product.name }}</h1>
+  <div class="page-sub">
+    #{{ product_id }}{% if product.sku %} · {{ product.sku }}{% endif %}{% if product.category %} · {{ product.category }}{% endif %}
+  </div>
+
+  {% if product.description %}
+  <p style="color:var(--text);font-size:13.5px;line-height:1.6;margin:14px 0;">{{ product.description }}</p>
+  {% endif %}
+
+  <div class="qty-display" style="margin-bottom:16px;">{{ quantity }} en stock ici</div>
+
+  <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-dim);">
+    {% if product.unit_price is number %}<div>Prix catalogue : {{ '%.2f'|format(product.unit_price) }} {{ product.currency or '€' }}</div>{% endif %}
+    {% if product.brand %}<div>Marque : {{ product.brand }}</div>{% endif %}
+    {% if product.supplier_name %}<div>Fournisseur : {{ product.supplier_name }}</div>{% endif %}
+    {% if product.tags %}<div>Tags : {{ product.tags|join(', ') }}</div>{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -16,3 +16,10 @@ class Config:
     BACKOFFICE_INTERNAL_TOKEN = os.environ.get(
         "BACKOFFICE_INTERNAL_TOKEN", "change-me-shared-secret"
     )
+
+    # API Produit externe (lecture seule, cf. docs/architecture.md §5).
+    # Même défaut que product_mcp_server/.env.example côté MCP pour matcher
+    # en dev sans configuration supplémentaire.
+    PRODUCTS_API_BASE_URL = os.environ.get(
+        "PRODUCTS_API_BASE_URL", "http://localhost:5001"
+    )

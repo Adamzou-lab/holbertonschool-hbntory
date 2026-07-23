@@ -6,8 +6,19 @@ de garde pour le même invariant (quantity >= 0), pas une redondance
 inutile.
 """
 
+from datetime import timedelta
+
 from app.extensions import db
-from app.models import Branch, Stock
+from app.models import (
+    MOVEMENT_ADD,
+    MOVEMENT_REMOVE,
+    MOVEMENT_TRANSFER_IN,
+    MOVEMENT_TRANSFER_OUT,
+    Branch,
+    Stock,
+    StockMovement,
+    _utcnow,
+)
 
 
 class StockError(Exception):
@@ -24,7 +35,23 @@ def _get_or_create_row(branch_id, product_id):
     return row
 
 
-def add_stock(branch_id, product_id, amount):
+def _log_movement(
+    branch_id, product_id, movement_type, quantity, user_id,
+    related_branch_id=None,
+):
+    db.session.add(
+        StockMovement(
+            branch_id=branch_id,
+            product_id=product_id,
+            movement_type=movement_type,
+            quantity=quantity,
+            related_branch_id=related_branch_id,
+            user_id=user_id,
+        )
+    )
+
+
+def add_stock(branch_id, product_id, amount, user_id):
     if amount <= 0:
         raise StockError(
             "La quantité à ajouter doit être un entier positif."
@@ -32,11 +59,12 @@ def add_stock(branch_id, product_id, amount):
 
     row = _get_or_create_row(branch_id, product_id)
     row.quantity += amount
+    _log_movement(branch_id, product_id, MOVEMENT_ADD, amount, user_id)
     db.session.commit()
     return row
 
 
-def remove_stock(branch_id, product_id, amount):
+def remove_stock(branch_id, product_id, amount, user_id):
     if amount <= 0:
         raise StockError(
             "La quantité à retirer doit être un entier positif."
@@ -53,8 +81,94 @@ def remove_stock(branch_id, product_id, amount):
         )
 
     row.quantity -= amount
+    _log_movement(branch_id, product_id, MOVEMENT_REMOVE, amount, user_id)
     db.session.commit()
     return row
+
+
+def transfer_stock(
+    source_branch_id, target_branch_id, product_id, amount, user_id
+):
+    """Déplace `amount` unités de product_id de source vers target.
+
+    Opération atomique (un seul commit) : soit les deux branches sont mises
+    à jour et les deux mouvements journalisés, soit rien ne l'est.
+    """
+    if amount <= 0:
+        raise StockError(
+            "La quantité à transférer doit être un entier positif."
+        )
+    if source_branch_id == target_branch_id:
+        raise StockError("La branche de destination doit être différente.")
+    if db.session.get(Branch, target_branch_id) is None:
+        raise StockError("Branche de destination introuvable.")
+
+    source_row = Stock.query.filter_by(
+        branch_id=source_branch_id, product_id=product_id
+    ).first()
+    if source_row is None or source_row.quantity < amount:
+        available = source_row.quantity if source_row else 0
+        raise StockError(
+            f"Stock insuffisant pour transférer : {available} "
+            f"disponible(s), {amount} demandé(s)."
+        )
+
+    target_row = _get_or_create_row(target_branch_id, product_id)
+    source_row.quantity -= amount
+    target_row.quantity += amount
+
+    _log_movement(
+        source_branch_id, product_id, MOVEMENT_TRANSFER_OUT, amount,
+        user_id, related_branch_id=target_branch_id,
+    )
+    _log_movement(
+        target_branch_id, product_id, MOVEMENT_TRANSFER_IN, amount,
+        user_id, related_branch_id=source_branch_id,
+    )
+    db.session.commit()
+    return source_row
+
+
+def get_branch_history(branch_id, limit=50):
+    return (
+        StockMovement.query.filter_by(branch_id=branch_id)
+        .order_by(StockMovement.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+
+def estimate_days_left(
+    branch_id, product_id, current_quantity, window_days=30
+):
+    """Estimation grossière (moyenne mobile) du nombre de jours avant
+    rupture, basée sur les sorties réelles (remove + transfer_out) des
+    `window_days` derniers jours.
+
+    Retourne None si on n'a pas assez de données pour estimer plutôt que
+    d'inventer un chiffre — même logique que l'agent IA côté MCP : pas de
+    réponse fabriquée sans données pour l'étayer.
+    """
+    since = _utcnow() - timedelta(days=window_days)
+    outflow = (
+        db.session.query(db.func.sum(StockMovement.quantity))
+        .filter(
+            StockMovement.branch_id == branch_id,
+            StockMovement.product_id == product_id,
+            StockMovement.movement_type.in_(
+                [MOVEMENT_REMOVE, MOVEMENT_TRANSFER_OUT]
+            ),
+            StockMovement.created_at >= since,
+        )
+        .scalar()
+    )
+    if not outflow:
+        return None
+
+    daily_rate = outflow / window_days
+    if daily_rate <= 0:
+        return None
+    return round(current_quantity / daily_rate, 1)
 
 
 def get_branch_stock(branch_id):
