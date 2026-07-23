@@ -95,3 +95,76 @@ class Stock(db.Model):
 
     def __repr__(self):
         return f"<Stock {self.product_id}@{self.branch_id}: {self.quantity}>"
+
+
+MOVEMENT_ADD = "add"
+MOVEMENT_REMOVE = "remove"
+MOVEMENT_TRANSFER_IN = "transfer_in"
+MOVEMENT_TRANSFER_OUT = "transfer_out"
+MOVEMENT_TYPES = (
+    MOVEMENT_ADD,
+    MOVEMENT_REMOVE,
+    MOVEMENT_TRANSFER_IN,
+    MOVEMENT_TRANSFER_OUT,
+)
+
+
+class StockMovement(db.Model):
+    """Journal immuable des mouvements de stock (ajouté hors MVP initial,
+    cf. docs/mvp.md) : chaque add/remove/transfert laisse une trace, utilisée
+    à la fois pour l'écran "Historique" et pour estimer les prévisions de
+    rupture (app/stock/service.py:estimate_days_left)."""
+
+    __tablename__ = "stock_movements"
+    __table_args__ = (
+        db.CheckConstraint(
+            "movement_type IN ('add', 'remove', 'transfer_in', 'transfer_out')",
+            name="ck_stock_movements_type",
+        ),
+        db.CheckConstraint(
+            "quantity > 0", name="ck_stock_movements_quantity_positive"
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    branch_id = db.Column(
+        db.Integer, db.ForeignKey("branches.id"), nullable=False
+    )
+    product_id = db.Column(db.Integer, nullable=False)
+    movement_type = db.Column(db.String(20), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    # Renseigné uniquement pour transfer_in/transfer_out : l'autre branche
+    # impliquée dans le transfert.
+    related_branch_id = db.Column(
+        db.Integer, db.ForeignKey("branches.id"), nullable=True
+    )
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False
+    )
+    created_at = db.Column(db.DateTime, default=_utcnow)
+
+    branch = db.relationship("Branch", foreign_keys=[branch_id])
+    related_branch = db.relationship(
+        "Branch", foreign_keys=[related_branch_id]
+    )
+    user = db.relationship("User")
+
+    def __repr__(self):
+        return (
+            f"<StockMovement {self.movement_type} "
+            f"{self.quantity}x#{self.product_id}@{self.branch_id}>"
+        )
+
+
+class AppSetting(db.Model):
+    """Paramètres techniques éditables par l'admin sans redéploiement
+    (ajouté hors MVP initial, cf. docs/mvp.md) : clé/valeur simple, lus via
+    app/settings.py:get_setting(key, default)."""
+
+    __tablename__ = "app_settings"
+
+    key = db.Column(db.String(80), primary_key=True)
+    value = db.Column(db.String(255), nullable=True)
+
+    def __repr__(self):
+        return f"<AppSetting {self.key}={self.value!r}>"

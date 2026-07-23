@@ -11,8 +11,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY . .
-
+COPY app ./app
+COPY migrations ./migrations
+COPY wsgi.py .
+COPY docker-entrypoint.sh .
 RUN chmod +x docker-entrypoint.sh
 
 EXPOSE 5000

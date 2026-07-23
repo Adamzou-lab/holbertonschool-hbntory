@@ -1,25 +1,27 @@
 :root{
-  --bg: #14171C;
-  --surface: #1D2129;
-  --surface-2: #262B34;
-  --border: #333A46;
-  --text: #ECEDEF;
-  --text-dim: #9BA3AF;
-  --accent: #F2A93B;
+  --bg: #0B0F14;
+  --surface: #12171D;
+  --surface-2: #171D24;
+  --border: #232A33;
+  --text: #E7EBF0;
+  --text-dim: #8B94A3;
+  --accent: #3FAE6B;
+  --accent-contrast: #08150F;
   --danger: #E1584B;
-  --danger-bg: #3a2420;
+  --danger-bg: #2B1416;
 }
 @media (prefers-color-scheme: light){
   :root{
-    --bg: #F3F1EC;
+    --bg: #F6F9FC;
     --surface: #FFFFFF;
-    --surface-2: #ECEAE3;
-    --border: #DDD8CC;
-    --text: #1C1F26;
-    --text-dim: #6B7280;
-    --accent: #C6790F;
+    --surface-2: #F0F4F8;
+    --border: #E3E8EE;
+    --text: #1A1F36;
+    --text-dim: #697386;
+    --accent: #1E5631;
+    --accent-contrast: #FFFFFF;
     --danger: #C23B2F;
-    --danger-bg: #f7ded9;
+    --danger-bg: #FBE4E2;
   }
 }
 *{ box-sizing: border-box; }
@@ -99,7 +101,7 @@ body{
 .composer input::placeholder{ color: var(--text-dim); }
 .composer button{
   background: var(--accent);
-  color: #14171C;
+  color: var(--accent-contrast);
   border: none;
   border-radius: 9px;
   padding: 0 18px;
@@ -133,7 +135,7 @@ body{
 }
 .msg.user{
   background: var(--accent);
-  color: #14171C;
+  color: var(--accent-contrast);
   align-self: flex-end;
   border-bottom-right-radius: 3px;
   font-weight: 500;

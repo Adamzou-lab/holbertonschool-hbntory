@@ -1,8 +1,8 @@
-FROM python:3.12-slim
+FROM nginx:alpine
 
-WORKDIR /app
-COPY . .
+# Pur HTML/CSS/JS, pas de build ni de serveur applicatif nécessaire — nginx
+# sert les fichiers tels quels, image minimale (~40 Mo).
+COPY index.html /usr/share/nginx/html/index.html
+COPY static /usr/share/nginx/html/static
 
-EXPOSE 8000
-
-CMD ["python3", "-m", "http.server", "8000"]
+EXPOSE 80

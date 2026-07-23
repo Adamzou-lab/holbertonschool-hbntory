@@ -1,9 +1,10 @@
-// URL du Service IA. En dev, il tourne sur le port 5002 (cf. ai_service/app.py).
-// 127.0.0.1 plutôt que "localhost" : Flask n'écoute qu'en IPv4 par défaut,
-// alors que "localhost" peut se résoudre en IPv6 (::1) selon l'OS/le
-// navigateur, ce qui casse la connexion. À adapter si le service est
-// déployé ailleurs (docker-compose, prod...).
-const AI_SERVICE_URL = "http://127.0.0.1:5002/api/query";
+// URL du Service IA. En dev, il tourne sur le port 8080 (cf. ai_service/src/main.py,
+// agent réel d'Erwan — FastAPI, endpoint POST /query, pas /api/query).
+// 127.0.0.1 plutôt que "localhost" : certains serveurs n'écoutent qu'en IPv4
+// par défaut, alors que "localhost" peut se résoudre en IPv6 (::1) selon
+// l'OS/le navigateur, ce qui casse la connexion. À adapter si le service
+// est déployé ailleurs (docker-compose, prod...).
+const AI_SERVICE_URL = "http://127.0.0.1:8080/query";
 
 const chat = document.getElementById("chat");
 const composer = document.getElementById("composer");
@@ -28,7 +29,17 @@ async function askQuestion(question) {
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || `Erreur serveur (${response.status}).`);
+    // Le Service IA (FastAPI) renvoie les erreurs sous {"detail": ...} —
+    // une chaîne pour une HTTPException, une liste d'objets pour une
+    // erreur de validation Pydantic (422). "error" gardé en repli pour
+    // rester compatible avec un éventuel autre backend.
+    let message = body.error || `Erreur serveur (${response.status}).`;
+    if (typeof body.detail === "string") {
+      message = body.detail;
+    } else if (Array.isArray(body.detail) && body.detail[0]?.msg) {
+      message = body.detail[0].msg;
+    }
+    throw new Error(message);
   }
 
   const data = await response.json();

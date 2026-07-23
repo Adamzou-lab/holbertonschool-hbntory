@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Historique{% endblock %}
+{% block content %}
+<h1 class="page-title">Historique — {{ current_user.branch.name if current_user.branch else '' }}</h1>
+<div class="page-sub">Les {{ movements|length }} derniers mouvements de stock de ta branche.</div>
+
+{% if not movements %}
+<div class="empty-state">Aucun mouvement enregistré pour l'instant.</div>
+{% else %}
+{% for m in movements %}
+{% set product = products.get(m.product_id) %}
+{% set label = {
+  'add': 'Ajout',
+  'remove': 'Retrait',
+  'transfer_in': 'Transfert reçu',
+  'transfer_out': 'Transfert envoyé',
+}[m.movement_type] %}
+{% set positive = m.movement_type in ['add', 'transfer_in'] %}
+<div class="user-row">
+  <span class="status-tag {{ 'active' if positive else 'inactive' }}">
+    {{ '+' if positive else '−' }}{{ m.quantity }}
+  </span>
+  <span>
+    {{ product.name if product else 'Produit #' ~ m.product_id }}
+    <span class="page-sub" style="margin:0;">— {{ label }}{% if m.related_branch %} {{ 'de' if m.movement_type == 'transfer_in' else 'vers' }} {{ m.related_branch.name }}{% endif %}</span>
+  </span>
+  <span class="page-sub" style="margin:0;">{{ m.user.username if m.user else '—' }}</span>
+  <span class="page-sub" style="margin:0;">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else '' }}</span>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

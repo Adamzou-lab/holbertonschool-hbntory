@@ -17,9 +17,11 @@
     {% if current_user.is_authenticated %}
     <nav class="nav">
       {% if current_user.is_admin %}
-      <a class="nav-item {{ 'active' if request.blueprint == 'admin' }}" href="{{ url_for('admin.users_list') }}">Utilisateurs</a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'admin.users_list' }}" href="{{ url_for('admin.users_list') }}">Utilisateurs</a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'admin.settings_page' }}" href="{{ url_for('admin.settings_page') }}">Paramètres</a>
       {% else %}
-      <a class="nav-item {{ 'active' if request.blueprint == 'stock' }}" href="{{ url_for('stock.list_stock') }}">Stock</a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'stock.list_stock' }}" href="{{ url_for('stock.list_stock') }}">Stock</a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'stock.history' }}" href="{{ url_for('stock.history') }}">Historique</a>
       {% endif %}
     </nav>
 

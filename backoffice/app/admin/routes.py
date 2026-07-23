@@ -1,6 +1,15 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import login_required
 
+from app import settings
 from app.decorators import role_required
 from app.extensions import db
 from app.models import ROLE_COMMON, Branch, User
@@ -105,3 +114,39 @@ def user_toggle_active(user_id):
         "success",
     )
     return redirect(url_for("admin.users_list"))
+
+
+@admin_bp.route("/settings", methods=["GET", "POST"])
+@login_required
+@role_required("admin")
+def settings_page():
+    error = None
+    if request.method == "POST":
+        threshold_raw = request.form.get("low_stock_threshold", "").strip()
+        api_url = request.form.get("products_api_base_url", "").strip()
+
+        if threshold_raw and not threshold_raw.isdigit():
+            error = "Le seuil de stock faible doit être un entier positif."
+        else:
+            settings.set_setting(
+                settings.LOW_STOCK_THRESHOLD, threshold_raw or None
+            )
+            settings.set_setting(
+                settings.PRODUCTS_API_BASE_URL, api_url or None
+            )
+            flash("Paramètres mis à jour.", "success")
+            return redirect(url_for("admin.settings_page"))
+
+    return render_template(
+        "admin/settings.html",
+        low_stock_threshold=settings.get_setting(
+            settings.LOW_STOCK_THRESHOLD, default=""
+        ),
+        products_api_base_url=settings.get_setting(
+            settings.PRODUCTS_API_BASE_URL, default=""
+        ),
+        default_products_api_base_url=current_app.config[
+            "PRODUCTS_API_BASE_URL"
+        ],
+        error=error,
+    )

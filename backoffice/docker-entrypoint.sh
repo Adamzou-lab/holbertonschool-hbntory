@@ -1,6 +1,8 @@
 #!/bin/sh
-# Applique les migrations puis seed (idempotent, cf. app/cli.py) avant de
-# démarrer le serveur, pour que le conteneur soit utilisable dès `up`.
+# flask db upgrade et flask seed sont tous les deux idempotents (Alembic ne
+# rejoue pas une migration déjà appliquée, seed vérifie qu'un admin/des
+# branches existent avant d'en recréer) — donc pas de risque à les relancer
+# à chaque démarrage du conteneur, même si la base existe déjà.
 set -e
 
 flask db upgrade
