@@ -45,6 +45,36 @@ base doivent exister avant tout le reste.
 - Docker Compose orchestrant l'ensemble des services (Backoffice, MCP, Service IA, Client web,
   API Produit) en une seule commande.
 
+## Mise à jour — fonctionnalités réintégrées (2026-07-23)
+
+Ces fonctionnalités avaient été coupées de la maquette exploratoire initiale
+(`docs/mockups/stock-dashboard.html`) pour rester strictement dans le MVP du
+sujet. Décision d'équipe (Adam) : les réintégrer, une fois le MVP strict
+posé et fonctionnel. Toutes lisent/écrivent uniquement des données déjà
+locales (stock, mouvements) ou interrogent l'API Produit en direct sans
+rien stocker — aucune ne viole la règle d'or (§ci-dessous).
+
+- **Historique des mouvements de stock** (`StockMovement`) : chaque
+  add/remove/transfert est journalisé (produit, quantité, branche, auteur,
+  date). Écran dédié pour le common user (`/stock/history`).
+- **Transferts de stock entre branches** : opération atomique (les deux
+  branches sont mises à jour dans le même commit, ou aucune), journalisée
+  comme deux mouvements liés (`transfer_out`/`transfer_in`).
+- **Prévisions de rupture de stock** : estimation basée sur la moyenne des
+  sorties réelles (retraits + transferts sortants) des 30 derniers jours.
+  Renvoie "pas assez de données" plutôt qu'un chiffre inventé s'il n'y a pas
+  d'historique — même principe que les réponses de l'agent IA (jamais
+  d'invention sans données pour l'étayer).
+- **Import/export CSV** du stock d'une branche (colonnes `product_id`,
+  `quantity`). L'import se comporte comme un ajout (`add_stock`), jamais un
+  écrasement destructif.
+- **Fiche produit détaillée + image** : résolue en direct depuis l'API
+  Produit externe à l'affichage (même client que la liste de stock,
+  `app/products/client.py`) — toujours rien de stocké localement.
+- **Paramètres admin (config technique)** : seuil de stock faible et
+  surcharge de l'URL de l'API Produit, éditables à chaud sans redéploiement
+  (table `app_settings`).
+
 ## Hors scope (explicitement exclu par le sujet)
 
 - SSL/TLS (non requis pour ce projet).
