@@ -1,47 +1,188 @@
-# Service IA — StockFlow (MOCK actuel)
+# HBntory AI Service
 
-**Ce service est actuellement un mock.** Il expose le contrat REST attendu par le Client Web,
-avec des réponses à base de mots-clés (pas de vrai agent, pas de connexion au serveur MCP).
-Erwan branchera le vrai agent (Task 4-5, `docs/decisions.md`) sur ce même contrat.
+Service backend indépendant qui répond aux questions des clients (anonymes)
+sur les produits et les stocks HBntory. Fait partie du **Bloc 3** (IA + client web).
 
-## Contrat REST
+> **Bloc 3 — Service IA.** Le client web est géré par Adam, ce service expose
+> uniquement l'endpoint REST consommé par ce client.
 
-- `GET /health` → `{"status": "ok", "mode": "mock"}`
-- `POST /api/query` avec `{"question": "..."}` → `{"answer": "..."}` (200), ou
-  `{"error": "..."}` (400) si `question` est vide/absente.
+## Architecture (rappel)
 
-## Types de questions supportées (Task 5.1)
+```
+Client web (Adam)  ──HTTP POST /query──▶  Service IA (ce dossier)
+                                            │
+                                            ├── PydanticAI Agent (LLM)
+                                            │     │
+                                            │     └── MCPToolset (Streamable HTTP)
+                                            │           │
+                                            │           ▼
+                                            │     product_mcp_server (Bloc 2)
+                                            │           │
+                                            │           ├── API Produit externe
+                                            │           └── API interne Backoffice
+```
 
-4 catégories, reprises directement du sujet et alignées sur les 4 tools stock du serveur MCP
-d'Erwan (`product_mcp_server/src/tools/stock_tools.py`) — quand le vrai agent remplacera le mock,
-chaque catégorie appellera le tool du même nom :
+## Endpoints
 
-| Catégorie | Exemple de question | Tool MCP qui répondra (à terme) |
+| Méthode | Path | Description |
 |---|---|---|
-| `product_details` | « Donne-moi les détails du produit HB-MON-2101. » | `get_product` |
-| `product_availability` | « Où trouver le produit HB-LAP-1001 ? » | `get_product_availability` |
-| `branch_inventory` | « Quels produits sont disponibles à la Branche Lyon ? » | `get_branch_inventory` |
-| `shopping_list` | « Si je veux 3 HB-LAP-1001 et 2 HB-MON-2101, quelle branche visiter ? » | `check_shopping_list` |
+| `POST` | `/query` | Pose une question à l'agent (réponse en texte libre + liste des outils appelés) |
+| `GET` | `/health` | Probe de readiness |
+| `GET` | `/tools` | Liste des outils MCP effectivement connectés (debug) |
+| `GET` | `/docs` | Swagger UI auto-généré (FastAPI) |
+| `GET` | `/openapi.json` | Spec OpenAPI |
 
-**Hors périmètre** : toute question qui ne rentre dans aucune de ces 4 catégories reçoit un
-message explicite disant que ce n'est pas supporté, plutôt qu'une réponse inventée (exigence du
-sujet Task 5 : "the response should clearly state that the information is unavailable").
+### Format `POST /query`
 
-La fonction `classify()` dans `app.py` fait ce classement (mots-clés simples pour l'instant côté
-mock). C'est cette même fonction qui devra, à terme, décider quel(s) tool(s) MCP appeler pour
-composer la réponse réelle.
+```jsonc
+// Request
+{
+  "question": "Dans quelle branche puis-je trouver 3 laptops 14 pouces ?"
+}
 
-## Lancer en local
+// Response 200
+{
+  "answer": "D'après notre stock, la branche Paris a 50 unités...",
+  "tool_calls": [
+    {"tool": "list_branches", "args": null},
+    {"tool": "get_product_availability", "args": {"product_id": "HB-LAP-1001"}}
+  ]
+}
+```
+
+## Choix techniques
+
+| Décision | Valeur | Justification |
+|---|---|---|
+| Framework agent | **PydanticAI** | Type-safe, intégration MCP native (`MCPToolset`), output validé Pydantic |
+| Framework HTTP | **FastAPI** | Async natif, OpenAPI auto, validation Pydantic des inputs |
+| Provider LLM | Multi-provider (anthropic/openai/google/ollama) | Flexibilité utilisateur via env var |
+| Connexion MCP | `pydantic_ai.mcp.MCPToolset` (Streamable HTTP) | Pont vers le serveur MCP HBntory |
+| Mémoire | Aucune | Chaque question est stateless (conforme spec) |
+| Streaming | Non | REST sync, conforme spec |
+| Output | Texte libre | L'agent répond en langage naturel |
+
+## Installation locale
 
 ```bash
 cd ai_service
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python app.py   # écoute sur http://127.0.0.1:5002
+.venv/bin/pip install -r requirements-dev.txt
+cp .env.example .env
+# Editer .env : mettre votre cle API (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
+.venv/bin/python -m src.main
 ```
 
-## Pourquoi Flask-Cors ici et pas côté Backoffice ?
+Le serveur écoute sur `http://localhost:8080` :
 
-Le Backoffice sert ses propres pages (SSR), donc pas de requête cross-origin. Le Client Web,
-lui, est une page statique servie séparément (autre port/domaine) qui appelle ce service en
-`fetch()` — sans CORS activé, le navigateur bloquerait la requête par la politique same-origin.
+```bash
+curl http://localhost:8080/health
+# {"status":"ok","service":"hbntory-ai-service",...}
+```
+
+## Lancement Docker
+
+```bash
+docker build -t hbntory-ai-service ./ai_service
+docker run --rm -p 8080:8080 \
+  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+  -e MCP_SERVER_URL=http://host.docker.internal:8000/mcp \
+  hbntory-ai-service
+```
+
+## Variables d'environnement
+
+| Variable | Défaut | Rôle |
+|---|---|---|
+| `LLM_PROVIDER` | `anthropic` | Fournisseur : `anthropic`, `openai`, `google`, `ollama`... |
+| `LLM_MODEL` | `claude-3-5-sonnet-latest` | Nom du modèle chez le fournisseur |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GOOGLE_API_KEY` | – | Clé API (variable standard reconnue par PydanticAI) |
+| `MCP_SERVER_URL` | `http://localhost:8000/mcp` | URL du serveur MCP (Bloc 2) |
+| `AI_HOST` | `0.0.0.0` | Host d'écoute |
+| `AI_PORT` | `8080` | Port d'écoute |
+| `LOG_LEVEL` | `INFO` | Niveau de log |
+| `REQUEST_TIMEOUT_SECONDS` | `30` | Timeout d'une requête `/query` |
+| `EXPOSE_TOOLS_ENDPOINT` | `true` | Active `/tools` (debug) |
+
+## Question types supportées (les 4 du sujet)
+
+| Question | Outils MCP utilisés |
+|---|---|
+| Détail d'un produit | `get_product` (parfois `search_products` d'abord pour résoudre un nom) |
+| Où est disponible un produit | `list_branches` + `get_product_availability` |
+| Contenu d'une branche | `list_branches` + `get_branch_inventory` |
+| Shopping list multi-produits | `get_product` (chaque item) + `check_shopping_list` |
+
+Hors périmètre (refus explicite) : météo, politique, conseils, etc. — voir `src/prompts.py` REGLE 2.
+
+## Garanties anti-hallucination
+
+Le system prompt impose **5 règles** (voir `src/prompts.py`) :
+
+1. **Faits réels uniquement** via les outils MCP — jamais d'invention.
+2. **Hors périmètre** = refus explicite.
+3. **Transparence** sur les produits inexistants.
+4. **Langue** de la question respectée.
+5. **Concision** : pas de JSON brut, réponse digérée.
+
+## Tests
+
+```bash
+cd ai_service
+.venv/bin/pytest -v
+```
+
+26 tests, aucune clé LLM ni serveur MCP réel requis :
+
+- `tests/test_endpoints.py` (11 tests) : 200/422/503 sur `/query`, `/health`, `/tools`, OpenAPI.
+- `tests/test_agent.py` (15 tests) : system prompt, build_agent, multi-provider, settings, schemas.
+
+Les tests utilisent `FakeAgent` + `FakeMCPConnection` (voir `tests/conftest.py`).
+
+## Tests manuels bout-en-bout
+
+Voir [`tests/MANUAL_TESTS.md`](tests/MANUAL_TESTS.md).
+
+## Arborescence
+
+```
+ai_service/
+├── Dockerfile
+├── README.md
+├── requirements.txt
+├── requirements-dev.txt
+├── pyproject.toml
+├── .env.example
+├── .dockerignore
+├── .gitignore
+├── src/
+│   ├── __init__.py
+│   ├── main.py             # FastAPI app + lifespan
+│   ├── agent.py            # PydanticAI Agent
+│   ├── mcp_client.py       # wrapper MCPToolset
+│   ├── config.py           # pydantic-settings
+│   ├── schemas.py          # requete/reponse Pydantic
+│   └── prompts.py          # system prompt
+└── tests/
+    ├── __init__.py
+    ├── conftest.py         # fixtures FakeAgent / FakeMCP
+    ├── test_endpoints.py
+    ├── test_agent.py
+    └── MANUAL_TESTS.md
+```
+
+## Limites connues
+
+- Nécessite un serveur MCP (Bloc 2) démarré sur `MCP_SERVER_URL` au lancement.
+- Clé API LLM obligatoire au runtime (sinon `UserError` à la construction de l'agent).
+- Pas de streaming : la réponse est complète en un bloc.
+- Pas de mémoire : un client ne peut pas enchaîner 2 questions dans un même "fil" — chaque appel est indépendant.
+
+## Dépendances externes
+
+| Service | Qui le lance | Statut |
+|---|---|---|
+| `product_mcp_server` (Bloc 2) | Erwan (déjà livré sur `erwan`) | ✅ |
+| Clé API LLM | Utilisateur (via `.env`) | ⚠️ à fournir |
+| API Produit externe | Docker (fourni) | Indirect, via MCP |
+| API interne Backoffice | Nico | Indirect, via MCP |
