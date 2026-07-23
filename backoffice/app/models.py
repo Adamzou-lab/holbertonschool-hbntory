@@ -38,6 +38,10 @@ class User(UserMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
+    # Pas utilisé pour se connecter (c'est l'email qui sert d'identifiant) :
+    # juste un nom affiché à côté de la branche dans l'UI, plus lisible
+    # qu'une adresse email dans la sidebar ou une liste d'utilisateurs.
+    username = db.Column(db.String(80), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default=ROLE_COMMON)
     branch_id = db.Column(

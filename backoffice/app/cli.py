@@ -43,7 +43,12 @@ def register_cli(app):
                     "défaut utilisé, à changer avant toute démo/prod."
                 )
                 admin_password = "changeme123"
-            admin = User(email=admin_email, role=ROLE_ADMIN, is_active=True)
+            admin = User(
+                email=admin_email,
+                username="Admin",
+                role=ROLE_ADMIN,
+                is_active=True,
+            )
             admin.set_password(admin_password)
             db.session.add(admin)
             click.echo(f"Admin créé : {admin_email}")

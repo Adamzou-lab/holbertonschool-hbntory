@@ -24,24 +24,33 @@ def user_new():
     error = None
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
+        username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
         branch_id = request.form.get("branch_id") or None
 
-        if not email or not password:
-            error = "Email et mot de passe sont obligatoires."
+        if not email or not username or not password:
+            error = "Email, nom affiché et mot de passe sont obligatoires."
         elif not branch_id:
             error = "Un common user doit être rattaché à une branche."
         elif User.query.filter_by(email=email).first() is not None:
             error = "Cet email est déjà utilisé."
         else:
-            user = User(email=email, role=ROLE_COMMON, branch_id=int(branch_id), is_active=True)
+            user = User(
+                email=email,
+                username=username,
+                role=ROLE_COMMON,
+                branch_id=int(branch_id),
+                is_active=True,
+            )
             user.set_password(password)
             db.session.add(user)
             db.session.commit()
             flash("Utilisateur créé.", "success")
             return redirect(url_for("admin.users_list"))
 
-    return render_template("admin/user_form.html", branches=branches, user=None, error=error)
+    return render_template(
+        "admin/user_form.html", branches=branches, user=None, error=error
+    )
 
 
 @admin_bp.route("/users/<int:user_id>/edit", methods=["GET", "POST"])
@@ -54,17 +63,22 @@ def user_edit(user_id):
 
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
+        username = request.form.get("username", "").strip()
         branch_id = request.form.get("branch_id") or None
         new_password = request.form.get("password", "")
 
-        if not email:
-            error = "L'email est obligatoire."
+        if not email or not username:
+            error = "Email et nom affiché sont obligatoires."
         elif not branch_id:
             error = "Un common user doit être rattaché à une branche."
-        elif User.query.filter(User.email == email, User.id != user.id).first() is not None:
+        elif (
+            User.query.filter(User.email == email, User.id != user.id).first()
+            is not None
+        ):
             error = "Cet email est déjà utilisé."
         else:
             user.email = email
+            user.username = username
             user.branch_id = int(branch_id)
             if new_password:
                 user.set_password(new_password)
@@ -72,7 +86,9 @@ def user_edit(user_id):
             flash("Utilisateur mis à jour.", "success")
             return redirect(url_for("admin.users_list"))
 
-    return render_template("admin/user_form.html", branches=branches, user=user, error=error)
+    return render_template(
+        "admin/user_form.html", branches=branches, user=user, error=error
+    )
 
 
 @admin_bp.route("/users/<int:user_id>/toggle-active", methods=["POST"])
@@ -83,7 +99,9 @@ def user_toggle_active(user_id):
     user.is_active = not user.is_active
     db.session.commit()
     flash(
-        "Utilisateur réactivé." if user.is_active else "Utilisateur désactivé (soft-delete).",
+        "Utilisateur réactivé."
+        if user.is_active
+        else "Utilisateur désactivé (soft-delete).",
         "success",
     )
     return redirect(url_for("admin.users_list"))

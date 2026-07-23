@@ -14,7 +14,7 @@
 {% else %}
 {% for u in users %}
 <div class="user-row">
-  <span>{{ u.email }}</span>
+  <span>{{ u.username }} <span class="page-sub" style="margin:0;">({{ u.email }})</span></span>
   <span class="page-sub" style="margin:0;">{{ u.branch.name if u.branch else 'Aucune branche' }}</span>
   <span class="status-tag {{ 'active' if u.is_active else 'inactive' }}">{{ 'Actif' if u.is_active else 'Désactivé' }}</span>
   <div class="user-row-actions">
