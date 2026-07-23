@@ -1,4 +1,4 @@
-# Backoffice — StockFlow
+# Backoffice — Zaiko
 
 Flask + SQLAlchemy + Flask-Migrate + Flask-Login (SSR Jinja2, cf. [docs/decisions.md](../docs/decisions.md)).
 
@@ -13,7 +13,7 @@ export FLASK_APP=wsgi.py
 .venv/bin/flask db upgrade      # crée la base (SQLite par défaut, cf. app/config.py)
 
 # ADMIN_PASSWORD à définir explicitement en dehors d'un contexte de dev
-ADMIN_EMAIL=admin@stockflow.local ADMIN_PASSWORD=changeme123 .venv/bin/flask seed
+ADMIN_EMAIL=admin@zaiko.local ADMIN_PASSWORD=changeme123 .venv/bin/flask seed
 
 .venv/bin/flask run
 ```
