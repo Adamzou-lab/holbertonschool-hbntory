@@ -1,0 +1,40 @@
+
+services:
+  backoffice:
+    build: ./backoffice
+    ports:
+      - "5000:5000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@stockflow.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme123}
+      BACKOFFICE_INTERNAL_TOKEN: ${BACKOFFICE_INTERNAL_TOKEN:-change-me-shared-secret}
+
+  ai_service:
+    build: ./ai_service
+    ports:
+      - "5002:5002"
+
+  product_mcp_server:
+    build: ./product_mcp_server
+    ports:
+      - "8001:8000"
+    environment:
+      # L'API Produit externe (conteneur hbntory-products-api) tourne en
+      # dehors de ce compose, sur la machine hôte. host.docker.internal
+      # fonctionne nativement sur Docker Desktop (Mac/Windows) ; sur Linux,
+      # extra_hosts ci-dessous le simule via la passerelle de l'hôte.
+      PRODUCTS_API_BASE_URL: ${PRODUCTS_API_BASE_URL:-http://host.docker.internal:5001}
+      BACKOFFICE_BASE_URL: http://backoffice:5000
+      BACKOFFICE_INTERNAL_TOKEN: ${BACKOFFICE_INTERNAL_TOKEN:-change-me-shared-secret}
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - backoffice
+
+  client_web:
+    build: ./client_web
+    ports:
+      - "8000:8000"
