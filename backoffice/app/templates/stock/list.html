@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Stock{% endblock %}
+{% block content %}
+<h1 class="page-title">Stock — {{ current_user.branch.name if current_user.branch else '' }}</h1>
+<div class="page-sub">Les noms de produits viendront de l'API Produit externe une fois branchée. Pour l'instant, identifiant produit numérique brut (l'id interne de l'API Produit, pas le sku).</div>
+
+<div class="toolbar">
+  <div class="count-pill">{{ stocks|length }} produit(s) en stock</div>
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-title" style="margin-bottom:10px;">Ajouter du stock</div>
+  <form method="post" action="{{ url_for('stock.add_stock') }}" class="qty-form" style="flex-wrap:wrap;">
+    <input type="number" name="product_id" min="1" placeholder="product_id (ex: 1)" required style="flex:1;min-width:180px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);">
+    <input type="number" name="quantity" min="1" placeholder="Quantité" required>
+    <button type="submit">Ajouter</button>
+  </form>
+</div>
+
+{% if not stocks %}
+<div class="empty-state">Aucun produit en stock pour cette branche.</div>
+{% else %}
+<div class="grid">
+  {% for s in stocks %}
+  <div class="card">
+    <div class="card-title">{{ s.product_id }}</div>
+    <div class="qty-display">{{ s.quantity }}</div>
+    <form method="post" action="{{ url_for('stock.add_stock') }}" class="qty-form">
+      <input type="hidden" name="product_id" value="{{ s.product_id }}">
+      <input type="number" name="quantity" min="1" value="1">
+      <button type="submit">+ Ajouter</button>
+    </form>
+    <form method="post" action="{{ url_for('stock.remove_stock') }}" class="qty-form" style="margin-top:6px;">
+      <input type="hidden" name="product_id" value="{{ s.product_id }}">
+      <input type="number" name="quantity" min="1" value="1">
+      <button type="submit">− Retirer</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

@@ -56,3 +56,28 @@ celle qui correspond au besoin et à la capacité de l'équipe.
 
 - Serveur MCP Produit (Bloc 2) : Erwan.
 - Backoffice + base relationnelle (Bloc 1) : Adam, Nico.
+
+## Mise à jour — accès stock du MCP (2026-07-22)
+
+Le point resté ouvert plus haut est tranché : le serveur MCP appelle une **API interne du
+Backoffice** (pas d'accès direct à la base), protégée par un secret partagé envoyé dans le header
+`X-Internal-Token` — pas de session Flask-Login, c'est un appel serveur-à-serveur.
+
+Routes exposées (`app/internal/routes.py`) :
+
+| Méthode | Route | Réponse |
+|---|---|---|
+| GET | `/api/internal/health` | `{"status": "ok"}` |
+| GET | `/api/internal/branches` | `[{id, name}]` |
+| GET | `/api/internal/stock/by-product/<int:product_id>` | `[{branch_id, branch_name, quantity}]` |
+| GET | `/api/internal/stock/by-branch/<int:branch_id>` | `[{product_id, quantity}]` (404 si branche inexistante) |
+| POST | `/api/internal/stock/shopping-list` | `{branches, strategy, recommendation}` |
+
+**Conséquence importante** : `Stock.product_id` est un **entier** (l'`id` numérique interne de
+l'API Produit externe), pas le `sku` (string). Le serveur MCP d'Erwan fait la résolution
+sku → id en interne ("option C", cf. `product_mcp_server/src/resolvers.py`) avant d'appeler cette
+API — le Backoffice ne manipule donc jamais de sku, seulement des entiers.
+
+Vérifié en conditions réelles : le vrai `StockClient` d'Erwan (pas un mock) a été exécuté contre
+un serveur Backoffice local réellement démarré — les 3 lectures, le cas 404 (branche inconnue) et
+le cas 403 (mauvais token) se comportent tous comme attendu.
