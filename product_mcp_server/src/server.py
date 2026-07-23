@@ -55,7 +55,12 @@ def build_server() -> FastMCP:
         timeout_seconds=settings.request_timeout_seconds,
     )
 
-    mcp = FastMCP(name="hbntory-product-mcp", stateless_http=True)
+    mcp = FastMCP(
+        name="hbntory-product-mcp",
+        stateless_http=True,
+        host=settings.mcp_host,
+        port=settings.mcp_port,
+    )
 
     register_product_tools(mcp, product_client)
     register_stock_tools(mcp, stock_client, product_client)
@@ -77,7 +82,7 @@ def main() -> None:
         settings.products_api_base_url,
         settings.backoffice_base_url,
     )
-    mcp.run(transport="streamable-http", host=settings.mcp_host, port=settings.mcp_port)
+    mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":
