@@ -1,5 +1,7 @@
 import os
 
+from sqlalchemy.pool import StaticPool
+
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
@@ -23,3 +25,26 @@ class Config:
     PRODUCTS_API_BASE_URL = os.environ.get(
         "PRODUCTS_API_BASE_URL", "http://localhost:5001"
     )
+
+
+class TestConfig(Config):
+    """Config utilisée par la suite de tests (tests/conftest.py).
+
+    SQLite en mémoire + StaticPool : sans ça, chaque nouvelle connexion
+    ouverte par le pool par défaut de SQLAlchemy verrait une base en
+    mémoire différente (vide), et les tables créées dans un fixture
+    n'existeraient plus pour la requête suivante.
+    """
+
+    TESTING = True
+    SECRET_KEY = "test-secret"
+    SQLALCHEMY_DATABASE_URI = "sqlite://"
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "poolclass": StaticPool,
+        "connect_args": {"check_same_thread": False},
+    }
+    BACKOFFICE_INTERNAL_TOKEN = "test-internal-token"
+    # Port réservé (jamais un vrai service dessus) : les tests doivent
+    # rester déterministes, pas dépendre de si la vraie API Produit
+    # tourne ou non sur la machine de dev au moment du run.
+    PRODUCTS_API_BASE_URL = "http://127.0.0.1:1"
