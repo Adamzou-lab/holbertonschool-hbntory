@@ -11,12 +11,56 @@ const composer = document.getElementById("composer");
 const input = document.getElementById("questionInput");
 const sendBtn = document.getElementById("sendBtn");
 
+const REDUCED_MOTION = window.matchMedia(
+  "(prefers-reduced-motion: reduce)"
+).matches;
+
 function appendMessage(role, text) {
   const el = document.createElement("div");
   el.className = `msg ${role}`;
   el.textContent = text;
   chat.appendChild(el);
   chat.scrollTop = chat.scrollHeight;
+  return el;
+}
+
+function appendPendingMessage() {
+  const el = document.createElement("div");
+  el.className = "msg pending";
+  el.innerHTML =
+    '<span class="typing-dots"><span></span><span></span><span></span></span>';
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+  return el;
+}
+
+function appendBotMessage(text) {
+  const el = document.createElement("div");
+  el.className = "msg bot";
+  chat.appendChild(el);
+
+  if (REDUCED_MOTION || text.length === 0) {
+    el.textContent = text;
+    return el;
+  }
+
+  // Pas de vrai streaming depuis le Service IA (la réponse arrive d'un
+  // coup) : on simule l'écriture progressive côté client. Vitesse
+  // adaptative pour qu'une réponse longue ne prenne jamais plus de ~1.5s
+  // à s'afficher — sinon l'effet devient gênant plutôt qu'agréable.
+  el.classList.add("typing");
+  const totalDurationMs = Math.min(1500, Math.max(300, text.length * 12));
+  const stepMs = Math.max(8, totalDurationMs / text.length);
+  let i = 0;
+  const timer = setInterval(() => {
+    i += 1;
+    el.textContent = text.slice(0, i);
+    chat.scrollTop = chat.scrollHeight;
+    if (i >= text.length) {
+      clearInterval(timer);
+      el.classList.remove("typing");
+    }
+  }, stepMs);
   return el;
 }
 
@@ -55,12 +99,12 @@ composer.addEventListener("submit", async (event) => {
   input.value = "";
   sendBtn.disabled = true;
 
-  const pending = appendMessage("pending", "L'assistant réfléchit…");
+  const pending = appendPendingMessage();
 
   try {
     const answer = await askQuestion(question);
     pending.remove();
-    appendMessage("bot", answer);
+    appendBotMessage(answer);
   } catch (err) {
     pending.remove();
     appendMessage(
