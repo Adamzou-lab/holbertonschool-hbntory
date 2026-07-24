@@ -60,3 +60,39 @@ def get_products(product_ids):
     si l'API était injoignable au moment de l'appel.
     """
     return {pid: get_product(pid) for pid in set(product_ids)}
+
+
+_CATALOG_CACHE_TTL_SECONDS = 60
+_catalog_cache = None
+
+
+def list_catalog():
+    """Liste complète du catalogue (pour peupler un menu déroulant côté
+    "Ajouter du stock"), triée par nom. [] si l'API est injoignable —
+    le formulaire retombe alors sur la saisie manuelle de l'id.
+    """
+    global _catalog_cache
+    if _catalog_cache is not None and (
+        time.time() - _catalog_cache[0] < _CATALOG_CACHE_TTL_SECONDS
+    ):
+        return _catalog_cache[1]
+
+    base_url = settings.get_setting(
+        settings.PRODUCTS_API_BASE_URL,
+        default=current_app.config["PRODUCTS_API_BASE_URL"],
+    )
+    products = []
+    try:
+        resp = requests.get(
+            f"{base_url}/api/v1/products",
+            params={"limit": 100, "offset": 0},
+            timeout=3,
+        )
+        if resp.status_code == 200:
+            products = resp.json().get("results", [])
+    except requests.RequestException:
+        current_app.logger.warning("API Produit injoignable pour la liste")
+
+    products.sort(key=lambda p: p.get("name", ""))
+    _catalog_cache = (time.time(), products)
+    return products

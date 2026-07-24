@@ -18,7 +18,16 @@
 <div class="card" style="margin-bottom:20px;">
   <div class="card-title" style="margin-bottom:10px;">Ajouter du stock</div>
   <form method="post" action="{{ url_for('stock.add_stock') }}" class="qty-form" style="flex-wrap:wrap;">
-    <input type="number" name="product_id" min="1" placeholder="product_id (ex: 1)" required style="flex:1;min-width:180px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);">
+    {% if catalog %}
+    <select name="product_id" required style="flex:1;min-width:220px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-family:'Manrope',sans-serif;font-size:13px;">
+      <option value="" disabled selected>Choisir un produit…</option>
+      {% for p in catalog %}
+      <option value="{{ p.id }}">{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}</option>
+      {% endfor %}
+    </select>
+    {% else %}
+    <input type="number" name="product_id" min="1" placeholder="product_id (ex: 1) — catalogue indisponible" required style="flex:1;min-width:220px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);">
+    {% endif %}
     <input type="number" name="quantity" min="1" placeholder="Quantité" required>
     <button type="submit">Ajouter</button>
   </form>

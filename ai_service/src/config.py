@@ -23,7 +23,7 @@ class Settings(BaseSettings):
         description="Fournisseur LLM (anthropic, openai, gemini, ollama, etc.).",
     )
     llm_model: str = Field(
-        default="claude-3-5-sonnet-latest",
+        default="claude-sonnet-5",
         description="Nom du modele chez le fournisseur.",
     )
 

@@ -17,7 +17,7 @@ from app import settings
 from app.decorators import role_required
 from app.extensions import db
 from app.models import Branch
-from app.products.client import get_product, get_products
+from app.products.client import get_product, get_products, list_catalog
 from app.stock import service
 
 stock_bp = Blueprint("stock", __name__, url_prefix="/stock")
@@ -50,9 +50,11 @@ def list_stock():
         .order_by(Branch.name)
         .all()
     )
+    catalog = list_catalog()
     return render_template(
         "stock/list.html",
         stocks=stocks,
+        catalog=catalog,
         products=products,
         forecasts=forecasts,
         low_stock_threshold=threshold,
