@@ -58,6 +58,12 @@ class Settings(BaseSettings):
         description="Si true, expose GET /tools (debug). A desactiver en prod.",
     )
 
+    internal_token: str | None = Field(
+        default=None,
+        alias="AI_INTERNAL_TOKEN",
+        description="Token attendu pour /internal/query. Si None, l'endpoint est ferme.",
+    )
+
 
 def get_settings() -> Settings:
     return Settings()

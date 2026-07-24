@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from .routing import Intent
 
 
 class QueryRequest(BaseModel):
-    """Question utilisateur envoyee a l'agent."""
-
     question: str = Field(
         min_length=1,
         max_length=2000,
@@ -15,26 +15,30 @@ class QueryRequest(BaseModel):
     )
 
 
-class ToolCallRecord(BaseModel):
-    """Trace d'un appel d'outil par l'agent (debug + observabilite)."""
+class ToolCallSummary(BaseModel):
+    """Trace d'un appel d'outil par l'agent."""
 
-    tool: str = Field(description="Nom de l'outil MCP appele.")
-    args: dict | None = Field(default=None, description="Arguments passes a l'outil.")
+    model_config = ConfigDict(extra="forbid")
+
+    tool: str
+    args: dict | None = None
 
 
 class QueryResponse(BaseModel):
-    """Reponse de l'agent a une question."""
+    """Reponse structuree de l'agent a une question."""
 
-    answer: str = Field(description="Reponse en langage naturel de l'agent.")
-    tool_calls: list[ToolCallRecord] = Field(
-        default_factory=list,
-        description="Liste des outils MCP appeles pour produire la reponse (debug).",
-    )
+    model_config = ConfigDict(extra="forbid")
+
+    answer: str
+    intent: Intent
+    routing_confidence: float = Field(ge=0, le=1)
+    tool_calls: list[ToolCallSummary] = Field(default_factory=list)
+    data_origins: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    request_id: str
 
 
 class HealthResponse(BaseModel):
-    """Reponse de /health."""
-
     status: str
     service: str
     mcp_server_url: str
@@ -43,13 +47,14 @@ class HealthResponse(BaseModel):
 
 
 class ToolSummary(BaseModel):
-    """Resume d'un outil expose par le MCP."""
-
     name: str
     description: str | None = None
 
 
 class ToolsResponse(BaseModel):
-    """Reponse de /tools (debug)."""
-
     tools: list[ToolSummary]
+
+
+class ErrorResponse(BaseModel):
+    detail: str
+    request_id: str | None = None
