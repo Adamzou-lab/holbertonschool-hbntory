@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>{% block title %}Zaiko{% endblock %} — Zaiko</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body data-theme="dark">
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">Z</div>
+      <div class="logo-text">Zaiko</div>
+    </div>
+
+    {% if current_user.is_authenticated %}
+    <nav class="nav">
+      {% if current_user.is_admin %}
+      <a class="nav-item {{ 'active' if request.endpoint == 'admin.users_list' }}" href="{{ url_for('admin.users_list') }}">Utilisateurs</a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'admin.settings_page' }}" href="{{ url_for('admin.settings_page') }}">Paramètres</a>
+      {% else %}
+      <a class="nav-item {{ 'active' if request.endpoint == 'stock.list_stock' }}" href="{{ url_for('stock.list_stock') }}">Stock</a>
+      <a class="nav-item {{ 'active' if request.endpoint == 'stock.history' }}" href="{{ url_for('stock.history') }}">Historique</a>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="account-chip">
+        <div class="account-avatar">{{ current_user.username[0]|upper }}</div>
+        <div class="account-info">
+          <div class="account-name">{{ current_user.username }}</div>
+          <div class="account-role">{{ 'Admin' if current_user.is_admin else current_user.branch.name if current_user.branch else '—' }}</div>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button">Changer de thème</button>
+      <form method="post" action="{{ url_for('auth.logout') }}">
+        <button class="logout-btn" type="submit">Se déconnecter</button>
+      </form>
+    </div>
+    {% endif %}
+  </aside>
+
+  <main class="main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<script>
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+  const body = document.body;
+  const isDark = body.getAttribute('data-theme') === 'dark';
+  body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+});
+</script>
+</body>
+</html>

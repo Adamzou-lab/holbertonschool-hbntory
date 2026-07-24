@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv_run/
+venv/
+*.egg-info/
+
+# Flask / DB locale
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Env
+.env
+.flaskenv
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/

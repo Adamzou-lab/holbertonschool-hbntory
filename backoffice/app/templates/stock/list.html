@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Stock{% endblock %}
+{% block content %}
+<h1 class="page-title">Stock — {{ current_user.branch.name if current_user.branch else '' }}</h1>
+<div class="page-sub">Noms et catégories résolus en direct depuis l'API Produit externe — jamais stockés dans notre base.</div>
+
+<div class="toolbar">
+  <div class="count-pill">{{ stocks|length }} produit(s) en stock</div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <a class="btn-secondary" href="{{ url_for('stock.export_csv') }}">⭳ Export CSV</a>
+    <form method="post" action="{{ url_for('stock.import_csv') }}" enctype="multipart/form-data" style="display:flex;gap:6px;align-items:center;">
+      <input type="file" name="csv_file" accept=".csv" required style="font-size:12px;color:var(--text-dim);max-width:160px;">
+      <button class="btn-secondary" type="submit">⭱ Import</button>
+    </form>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-title" style="margin-bottom:10px;">Ajouter du stock</div>
+  <form method="post" action="{{ url_for('stock.add_stock') }}" class="qty-form" style="flex-wrap:wrap;">
+    {% if catalog %}
+    <select name="product_id" required style="flex:1;min-width:220px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);font-family:'Manrope',sans-serif;font-size:13px;">
+      <option value="" disabled selected>Choisir un produit…</option>
+      {% for p in catalog %}
+      <option value="{{ p.id }}">{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}</option>
+      {% endfor %}
+    </select>
+    {% else %}
+    <input type="number" name="product_id" min="1" placeholder="product_id (ex: 1) — catalogue indisponible" required style="flex:1;min-width:220px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;color:var(--text);">
+    {% endif %}
+    <input type="number" name="quantity" min="1" placeholder="Quantité" required>
+    <button type="submit">Ajouter</button>
+  </form>
+</div>
+
+{% if not stocks %}
+<div class="empty-state">Aucun produit en stock pour cette branche.</div>
+{% else %}
+<div class="search-bar">
+  <input type="search" id="stockFilter" placeholder="Filtrer par nom, catégorie, sku ou id...">
+</div>
+<div class="grid" id="stockGrid">
+  {% for s in stocks %}
+  {% set product = products.get(s.product_id) %}
+  {% set search_text = s.product_id|string ~ ' ' ~ (product.name if product else '') ~ ' ' ~ (product.category if product and product.category else '') ~ ' ' ~ (product.sku if product and product.sku else '') %}
+  {% set forecast = forecasts.get(s.product_id) %}
+  {% set low_stock = s.quantity <= low_stock_threshold %}
+  <div class="card product-card" data-search="{{ search_text|lower }}">
+    <div class="card-head">
+      <div>
+        <div class="card-title">
+          <a href="{{ url_for('stock.product_detail', product_id=s.product_id) }}">
+            {{ product.name if product else 'Produit #' ~ s.product_id }}
+          </a>
+        </div>
+        <div class="card-id">#{{ s.product_id }}</div>
+      </div>
+      {% if product and product.category %}
+      <span class="pill">{{ product.category }}</span>
+      {% endif %}
+    </div>
+
+    {% if low_stock %}
+    <span class="badge-low">Stock faible</span>
+    {% endif %}
+    {% if forecast %}
+    <div class="forecast-line">Rupture estimée dans ~{{ forecast }} j</div>
+    {% endif %}
+    {% if not product %}
+    <div class="unavailable-line">Infos indisponibles — API Produit injoignable</div>
+    {% endif %}
+
+    <div class="qty-row">
+      <span class="qty-num">{{ s.quantity }}</span>
+      <span class="qty-label">en stock</span>
+    </div>
+
+    <form method="post" class="stock-row">
+      <input type="hidden" name="product_id" value="{{ s.product_id }}">
+      <input type="number" name="quantity" min="1" value="1">
+      <button type="submit" formaction="{{ url_for('stock.add_stock') }}" class="btn-add">+ Ajouter</button>
+      <button type="submit" formaction="{{ url_for('stock.remove_stock') }}" class="btn-remove">− Retirer</button>
+    </form>
+
+    {% if other_branches %}
+    <details class="transfer">
+      <summary>Transférer</summary>
+      <form method="post" action="{{ url_for('stock.transfer') }}" class="transfer-body">
+        <input type="hidden" name="product_id" value="{{ s.product_id }}">
+        <select name="target_branch_id" required>
+          {% for b in other_branches %}
+          <option value="{{ b.id }}">{{ b.name }}</option>
+          {% endfor %}
+        </select>
+        <input type="number" name="quantity" min="1" value="1">
+        <button type="submit">Envoyer</button>
+      </form>
+    </details>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+<div class="empty-state" id="noMatch" style="display:none;">Aucun produit ne correspond à cette recherche.</div>
+<script>
+(function () {
+  var input = document.getElementById('stockFilter');
+  var cards = document.querySelectorAll('#stockGrid .product-card');
+  var noMatch = document.getElementById('noMatch');
+  if (!input) return;
+  input.addEventListener('input', function () {
+    var q = input.value.trim().toLowerCase();
+    var visible = 0;
+    cards.forEach(function (card) {
+      var match = card.dataset.search.indexOf(q) !== -1;
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    noMatch.style.display = (q && visible === 0) ? 'block' : 'none';
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

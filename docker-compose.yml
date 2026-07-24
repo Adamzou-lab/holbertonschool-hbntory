@@ -1,0 +1,79 @@
+services:
+  backoffice:
+    build: ./backoffice
+    ports:
+      - "5000:5000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
+      # Volume nommé plus bas -> la base doit vivre dedans, sinon elle
+      # disparaît à chaque `docker compose down` / rebuild d'image.
+      DATABASE_URL: sqlite:////data/backoffice.db
+      BACKOFFICE_INTERNAL_TOKEN: ${BACKOFFICE_INTERNAL_TOKEN:-change-me-shared-secret}
+      # L'API Produit externe (repo hbntory-products-api) n'est pas un
+      # service de ce compose : elle est fournie séparément par l'école et
+      # se lance avec son propre `docker compose up` sur le host, port 5001.
+      # host.docker.internal permet à ce conteneur de l'atteindre malgré
+      # tout (extra_hosts ci-dessous, nécessaire sur Linux natif).
+      PRODUCTS_API_BASE_URL: http://host.docker.internal:5001
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@zaiko.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme123}
+    volumes:
+      - backoffice_db:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  mcp:
+    build: ./product_mcp_server
+    ports:
+      - "8001:8000"
+    environment:
+      PRODUCTS_API_BASE_URL: http://host.docker.internal:5001
+      # Entre nos propres services, on utilise le nom du service comme host
+      # (résolution DNS interne à Docker Compose) plutôt que localhost.
+      BACKOFFICE_BASE_URL: http://backoffice:5000
+      BACKOFFICE_INTERNAL_TOKEN: ${BACKOFFICE_INTERNAL_TOKEN:-change-me-shared-secret}
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8000
+      LOG_LEVEL: INFO
+    depends_on:
+      - backoffice
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # ai_service (ci-dessous) plante purement et simplement au démarrage
+    # si le MCP n'est pas encore prêt (MCPConnection.connect() sans
+    # try/except dans le lifespan FastAPI) — depends_on seul ne garantit
+    # que l'ordre de *lancement* des conteneurs, pas que /health réponde
+    # déjà. Ce healthcheck sert de signal pour "condition: service_healthy"
+    # côté ai_service.
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  ai_service:
+    build: ./ai_service
+    ports:
+      - "8080:8080"
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+      LLM_MODEL: ${LLM_MODEL:-claude-3-5-sonnet-latest}
+      # Lues directement par PydanticAI depuis l'environnement standard du
+      # provider choisi (une seule est vraiment nécessaire selon LLM_PROVIDER)
+      # — valeur réelle dans .env (jamais commitée), vide par défaut ici.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      MCP_SERVER_URL: http://mcp:8000/mcp
+    depends_on:
+      mcp:
+        condition: service_healthy
+
+  client_web:
+    build: ./client_web
+    ports:
+      - "8000:80"
+
+volumes:
+  backoffice_db:

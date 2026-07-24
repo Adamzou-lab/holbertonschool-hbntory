@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier' if user else 'Créer' }} un utilisateur{% endblock %}
+{% block content %}
+<h1 class="page-title">{{ 'Modifier' if user else 'Créer' }} un utilisateur</h1>
+<div class="page-sub">Common user rattaché à une branche unique</div>
+
+{% if error %}
+<div class="flash error">{{ error }}</div>
+{% endif %}
+
+<div class="form-card">
+  <form method="post">
+    <div class="field">
+      <label>Email <span style="font-weight:400;text-transform:none;">(sert à se connecter)</span></label>
+      <input type="email" name="email" value="{{ user.email if user else '' }}" required>
+    </div>
+    <div class="field">
+      <label>Nom affiché <span style="font-weight:400;text-transform:none;">(affiché à côté de la branche)</span></label>
+      <input type="text" name="username" value="{{ user.username if user else '' }}" required>
+    </div>
+    <div class="field">
+      <label>Mot de passe {% if user %}<span style="font-weight:400;text-transform:none;">(laisser vide pour ne pas changer)</span>{% endif %}</label>
+      <input type="password" name="password" {{ 'required' if not user else '' }}>
+    </div>
+    <div class="field">
+      <label>Branche</label>
+      <select name="branch_id" required>
+        <option value="">— Choisir une branche —</option>
+        {% for b in branches %}
+        <option value="{{ b.id }}" {{ 'selected' if user and user.branch_id == b.id }}>{{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-actions">
+      <a class="btn-secondary" href="{{ url_for('admin.users_list') }}">Annuler</a>
+      <button class="btn-primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -31,7 +31,8 @@ class MCPConnection:
         """Cree la connexion MCP au demarrage (context manager ouvert)."""
         logger.info("Connecting to MCP server at %s", settings.mcp_server_url)
         toolset = MCPToolset(settings.mcp_server_url)
-        # On entre dans le context manager ici ; l'appelant doit appeler close().
+        # On entre dans le context manager ici ; l'appelant doit appeler
+        # close().
         await toolset.__aenter__()
         logger.info("MCP server connected")
         return cls(toolset)
@@ -49,10 +50,16 @@ class MCPConnection:
             logger.warning("Error closing MCP toolset: %s", exc)
 
     async def list_tool_names(self) -> list[str]:
-        """Liste les noms des outils exposes par le MCP (debug)."""
+        """Liste les noms des outils exposes par le MCP (debug).
+
+        get_tools() attend desormais un RunContext (reserve a la boucle
+        interne de l'agent) sur les versions recentes de pydantic-ai ;
+        list_tools() est le point d'entree bas niveau (protocole MCP direct,
+        pas de RunContext) adapte a un simple listing hors d'un run agent.
+        """
         try:
-            tools = await self._toolset.get_tools()
-            return list(tools.keys())
+            tools = await self._toolset.list_tools()
+            return [tool.name for tool in tools]
         except Exception as exc:
             logger.warning("Failed to list MCP tools: %s", exc)
             return []

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zaiko — Assistant produits &amp; stock</title>
+<link rel="stylesheet" href="static/css/style.css">
+</head>
+<body data-theme="dark">
+<div class="page">
+
+  <div class="hero-wrap">
+    <div class="hero">
+      <h1 class="wordmark">Zaiko</h1>
+      <p class="tagline">Bonjour ! Comment puis-je t'aider aujourd'hui ?</p>
+
+      <form class="composer" id="composer">
+        <input
+          type="text"
+          id="questionInput"
+          placeholder="Écris ta question…"
+          autocomplete="off"
+          required
+        >
+        <button type="submit" id="sendBtn">Envoyer</button>
+      </form>
+    </div>
+  </div>
+
+  <main class="chat" id="chat"></main>
+
+</div>
+
+<!--
+  Lien vers le Backoffice, pour les employés qui ont un compte. Volontairement
+  un simple lien externe, pas une fusion des deux apps : le Client Web reste
+  public/anonyme, le Backoffice reste séparé (auth + logique métier propres).
+  URL de dev — à adapter selon le déploiement (docker-compose, prod...).
+-->
+<a class="login-link" href="http://127.0.0.1:5000/login" target="_blank" rel="noopener noreferrer">Se connecter</a>
+
+<script src="static/js/app.js"></script>
+</body>
+</html>

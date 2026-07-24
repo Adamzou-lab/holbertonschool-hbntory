@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Paramètres{% endblock %}
+{% block content %}
+<h1 class="page-title">Paramètres</h1>
+<div class="page-sub">Réglages techniques, appliqués immédiatement, sans redémarrage.</div>
+
+{% if error %}
+<div class="flash error">{{ error }}</div>
+{% endif %}
+
+<div class="form-card">
+  <form method="post">
+    <div class="field">
+      <label>Seuil de stock faible <span style="font-weight:400;text-transform:none;">(badge "Stock faible" affiché en dessous)</span></label>
+      <input type="number" name="low_stock_threshold" min="0" value="{{ low_stock_threshold }}" placeholder="5">
+    </div>
+    <div class="field">
+      <label>URL de l'API Produit <span style="font-weight:400;text-transform:none;">(surcharge PRODUCTS_API_BASE_URL, vide = valeur par défaut)</span></label>
+      <input type="text" name="products_api_base_url" value="{{ products_api_base_url }}" placeholder="{{ default_products_api_base_url }}">
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
