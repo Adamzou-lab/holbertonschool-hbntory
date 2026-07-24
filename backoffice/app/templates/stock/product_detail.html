@@ -30,4 +30,21 @@
   </div>
 </div>
 {% endif %}
+
+<div class="page-title" style="font-size:16px;margin:24px 0 4px 0;">Disponibilité dans les autres branches</div>
+<div class="page-sub">Informatif — tu ne peux transférer que depuis ta propre branche. Ces données viennent de notre base, indépendamment de l'API Produit ci-dessus.</div>
+{% if not availability %}
+<div class="empty-state">Aucune autre branche.</div>
+{% else %}
+{% for row in availability %}
+<div class="user-row">
+  <span>{{ row.branch.name }}</span>
+  {% if row.quantity > 0 %}
+  <span class="status-tag active">{{ row.quantity }} en stock</span>
+  {% else %}
+  <span class="status-tag inactive">Rupture</span>
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}
 {% endblock %}

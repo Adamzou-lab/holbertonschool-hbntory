@@ -82,6 +82,12 @@ rien stocker — aucune ne viole la règle d'or (§ci-dessous).
   visibilité sur le stock, seulement la gestion des users) sans violer
   "aucune gestion de stock côté admin" : uniquement de la lecture, aucune
   action de modification sur cet écran.
+- **Disponibilité cross-branches sur la fiche produit** (2026-07-24) :
+  `/stock/product/<id>` affiche désormais, sous les infos produit, la
+  quantité disponible dans chaque autre branche — purement informatif
+  (le common user ne peut transférer que depuis sa propre branche, cf.
+  `transfer_stock`), pour décider où demander un transfert avant de le
+  faire plutôt qu'à l'aveugle.
 
 ## Hors scope (explicitement exclu par le sujet)
 
