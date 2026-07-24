@@ -1,16 +1,16 @@
-"""Point d'entree du serveur MCP HBntory Produit.
+"""Point d'entree du serveur MCP HBntory.
 
-Lance un FastMCP en transport Streamable HTTP. Les outils produit
-(list/get/search) sont enregistres ici. Les outils stock seront ajoutes
-quand Nico livrera l'API interne du Backoffice (cf. stock_client.py,
-stock_tools.py).
+Serveur FastMCP en transport Streamable HTTP avec :
+- 3 outils produit
+- 4 outils stock (read-only via API interne Backoffice)
+- 10 outils analytics (P1)
+- 4 outils forecast (P2)
+- 4 outils margin (P3)
 
-Usage local :
-    cd product_mcp_server
-    python -m src.server
+Aucun outil n'ecrit dans le stock. Les donnees de rentabilite sont
+synthetiques et toujours signalees.
 
-Tests :
-    pytest -v
+Lancement local : python -m src.server
 """
 
 from __future__ import annotations
@@ -20,17 +20,22 @@ import logging
 from mcp.server.fastmcp import FastMCP
 from starlette.responses import JSONResponse
 
+from .clients.product_client import ProductClient
+from .clients.stock_client import StockClient
 from .config import get_settings
-from .product_client import ProductClient
-from .stock_client import StockClient
-from .tools.product_tools import register as register_product_tools
-from .tools.stock_tools import register as register_stock_tools
+from .providers.forecast_fixture import FixtureForecastProvider
+from .providers.profitability_fixture import FixtureProfitabilityProvider
+from .schemas.forecast import CalculationBasis
+from .tools.analytics_tools import register as register_analytics
+from .tools.forecast_tools import register as register_forecast
+from .tools.margin_tools import register as register_margin
+from .tools.product_tools import register as register_product
+from .tools.stock_tools import register as register_stock
 
 logger = logging.getLogger("hbntory.product_mcp")
 
 
 def _configure_logging(level: str) -> None:
-    """Configure le logging racine une seule fois."""
     logging.basicConfig(
         level=level.upper(),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -38,10 +43,7 @@ def _configure_logging(level: str) -> None:
 
 
 def build_server() -> FastMCP:
-    """Construit l'instance FastMCP avec les outils connus.
-
-    Separe de main() pour faciliter les tests d'integration.
-    """
+    """Construit l'instance FastMCP avec tous les outils et providers."""
     settings = get_settings()
     _configure_logging(settings.log_level)
 
@@ -55,6 +57,9 @@ def build_server() -> FastMCP:
         timeout_seconds=settings.request_timeout_seconds,
     )
 
+    forecast_provider = FixtureForecastProvider()
+    profitability_provider = FixtureProfitabilityProvider()
+
     mcp = FastMCP(
         name="hbntory-product-mcp",
         stateless_http=True,
@@ -62,8 +67,11 @@ def build_server() -> FastMCP:
         port=settings.mcp_port,
     )
 
-    register_product_tools(mcp, product_client)
-    register_stock_tools(mcp, stock_client, product_client)
+    register_product(mcp, product_client)
+    register_stock(mcp, stock_client, product_client)
+    register_analytics(mcp, product_client, stock_client)
+    register_forecast(mcp, forecast_provider, product_client, basis=CalculationBasis.FIXTURE_SERIES)
+    register_margin(mcp, profitability_provider, product_client)
 
     @mcp.custom_route("/health", methods=["GET"])
     async def health(_request) -> JSONResponse:

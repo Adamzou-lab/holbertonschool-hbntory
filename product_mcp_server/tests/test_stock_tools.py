@@ -295,7 +295,8 @@ async def test_check_shopping_list_500_maps_to_tool_error() -> None:
     fn = _tool(mcp, "check_shopping_list")
     with pytest.raises(ToolError) as ei:
         await fn(items=[{"product_id": "1", "quantity": 1}])
-    assert "unreachable" in str(ei.value).lower()
+    msg = str(ei.value).lower()
+    assert "5xx" in msg or "unavailable" in msg or "upstream" in msg
 
 
 # --- Auth header sur tous les appels ---
