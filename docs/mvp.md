@@ -36,8 +36,11 @@ base doivent exister avant tout le reste.
 
 ## Priorité 3 — optionnel si le temps le permet
 
-- Questions multi-produits complexes ("si je veux 3 X, 2 Y et 4 Z, quelle(s) branche(s)
-  visiter ?") nécessitant que l'agent croise plusieurs appels de tools et agrège le résultat.
+- ~~Questions multi-produits complexes~~ **fait** (tool MCP `check_shopping_list`,
+  implémenté par Erwan) : "si je veux 3 X, 2 Y et 4 Z, quelle(s) branche(s) visiter ?"
+  — s'appuie sur `app/stock/service.py::check_shopping_list` côté Backoffice via
+  `/api/internal/stock/shopping-list`, testé côté MCP et `ai_service`
+  (`test_integration_mcp.py`).
 - Amélioration du style visuel du Backoffice et du client web (le sujet précise que le visuel
   n'est pas la priorité).
 - Recherche/filtre sur la liste de produits en stock.

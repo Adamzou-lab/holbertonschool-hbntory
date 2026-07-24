@@ -1,12 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Vue d'ensemble{% endblock %}
 {% block content %}
-<h1 class="page-title">Vue d'ensemble</h1>
-<div class="page-sub">Lecture seule — l'admin ne modifie jamais le stock directement, cf. répartition des rôles du sujet.</div>
+<div class="toolbar">
+  <div>
+    <h1 class="page-title">Vue d'ensemble</h1>
+    <div class="page-sub" style="margin-bottom:0;">Lecture seule — l'admin ne modifie jamais le stock directement, cf. répartition des rôles du sujet.</div>
+  </div>
+  <a class="btn-secondary" href="{{ url_for('admin.export_dashboard_csv') }}">⭳ Export CSV global</a>
+</div>
 
 <div class="grid" style="margin-bottom:28px;">
   {% for row in per_branch %}
-  <div class="card">
+  <a class="card product-card" href="{{ url_for('admin.branch_detail', branch_id=row.branch.id) }}" style="text-decoration:none;color:inherit;display:block;">
     <div class="card-head" style="margin-bottom:14px;">
       <div class="card-title">{{ row.branch.name }}</div>
       {% if row.low_stock_count %}
@@ -23,7 +28,7 @@
         <div class="stat-label">unités en stock</div>
       </div>
     </div>
-  </div>
+  </a>
   {% endfor %}
 </div>
 

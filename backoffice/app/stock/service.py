@@ -214,6 +214,18 @@ def stock_by_product(product_id):
     ]
 
 
+def get_all_stock():
+    """Toutes les lignes de stock, toutes branches confondues, triées par
+    branche puis produit — pour l'export CSV global de l'admin (lecture
+    seule, cf. dashboard_overview ci-dessous)."""
+    return (
+        db.session.query(Stock, Branch)
+        .join(Branch, Stock.branch_id == Branch.id)
+        .order_by(Branch.name, Stock.product_id)
+        .all()
+    )
+
+
 def dashboard_overview(low_stock_threshold):
     """Vue d'ensemble en lecture seule pour l'admin (ajouté hors MVP
     initial) : jamais de modification depuis cet écran, cf. mvp.md
@@ -243,7 +255,11 @@ def dashboard_overview(low_stock_threshold):
             }
         )
         low_stock_rows.extend(
-            {"branch": branch, "product_id": r.product_id, "quantity": r.quantity}
+            {
+                "branch": branch,
+                "product_id": r.product_id,
+                "quantity": r.quantity,
+            }
             for r in low_rows
         )
 
