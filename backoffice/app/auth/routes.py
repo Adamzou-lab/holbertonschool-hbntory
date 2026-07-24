@@ -11,7 +11,7 @@ def index():
     if not current_user.is_authenticated:
         return redirect(url_for("auth.login"))
     if current_user.is_admin:
-        return redirect(url_for("admin.users_list"))
+        return redirect(url_for("admin.dashboard"))
     return redirect(url_for("stock.list_stock"))
 
 

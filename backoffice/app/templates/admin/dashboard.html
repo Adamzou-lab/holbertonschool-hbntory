@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Vue d'ensemble{% endblock %}
+{% block content %}
+<h1 class="page-title">Vue d'ensemble</h1>
+<div class="page-sub">Lecture seule — l'admin ne modifie jamais le stock directement, cf. répartition des rôles du sujet.</div>
+
+<div class="grid" style="margin-bottom:28px;">
+  {% for row in per_branch %}
+  <div class="card">
+    <div class="card-head" style="margin-bottom:14px;">
+      <div class="card-title">{{ row.branch.name }}</div>
+      {% if row.low_stock_count %}
+      <span class="badge-low" style="margin:0;">{{ row.low_stock_count }} en rupture</span>
+      {% endif %}
+    </div>
+    <div class="stat-row">
+      <div class="stat-block">
+        <div class="stat-number">{{ row.product_count }}</div>
+        <div class="stat-label">produit(s) référencé(s)</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-number">{{ row.total_quantity }}</div>
+        <div class="stat-label">unités en stock</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="page-title" style="font-size:16px;margin-bottom:4px;">Alertes stock faible</div>
+<div class="page-sub">Toutes branches confondues, quantité ≤ {{ low_stock_threshold }} (seuil réglable dans Paramètres).</div>
+
+{% if not low_stock_rows %}
+<div class="empty-state">Aucune alerte — tout est au-dessus du seuil.</div>
+{% else %}
+{% for row in low_stock_rows %}
+{% set product = products.get(row.product_id) %}
+<div class="user-row">
+  <span class="status-tag inactive">{{ row.quantity }} restant(s)</span>
+  <span>
+    {{ product.name if product else 'Produit #' ~ row.product_id }}
+    <span class="page-sub" style="margin:0;">#{{ row.product_id }}</span>
+  </span>
+  <span class="page-sub" style="margin:0;">{{ row.branch.name }}</span>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

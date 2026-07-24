@@ -147,6 +147,11 @@ body{
 .qty-form button:hover{ border-color:var(--accent); color:var(--accent); }
 .empty-state{ text-align:center; padding:50px 20px; color:var(--text-dim); }
 
+/* DASHBOARD (admin) */
+.stat-row{ display:flex; gap:20px; }
+.stat-number{ font-family:'Sora',sans-serif; font-size:26px; font-weight:800; letter-spacing:-0.5px; }
+.stat-label{ font-size:11.5px; color:var(--text-dim); margin-top:2px; }
+
 /* PRODUCT CARD (v2) */
 .product-card:hover{ border-color:var(--accent); }
 .card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }

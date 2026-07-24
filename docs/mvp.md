@@ -74,6 +74,14 @@ rien stocker — aucune ne viole la règle d'or (§ci-dessous).
 - **Paramètres admin (config technique)** : seuil de stock faible et
   surcharge de l'URL de l'API Produit, éditables à chaud sans redéploiement
   (table `app_settings`).
+- **Dashboard admin** (2026-07-24) : vue d'ensemble cross-branches en
+  lecture seule (`/admin/dashboard`, nouvel écran d'accueil de l'admin) —
+  nombre de produits référencés et quantité totale par branche, plus la
+  liste des lignes sous le seuil de stock faible toutes branches
+  confondues. Comble un vide réel (l'admin n'avait jusque-là aucune
+  visibilité sur le stock, seulement la gestion des users) sans violer
+  "aucune gestion de stock côté admin" : uniquement de la lecture, aucune
+  action de modification sur cet écran.
 
 ## Hors scope (explicitement exclu par le sujet)
 

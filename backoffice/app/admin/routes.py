@@ -13,8 +13,28 @@ from app import settings
 from app.decorators import role_required
 from app.extensions import db
 from app.models import ROLE_COMMON, Branch, User
+from app.products.client import get_products
+from app.stock import service as stock_service
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+@admin_bp.route("/dashboard")
+@login_required
+@role_required("admin")
+def dashboard():
+    threshold = settings.get_setting_int(
+        settings.LOW_STOCK_THRESHOLD, default=5
+    )
+    per_branch, low_stock_rows = stock_service.dashboard_overview(threshold)
+    products = get_products(row["product_id"] for row in low_stock_rows)
+    return render_template(
+        "admin/dashboard.html",
+        per_branch=per_branch,
+        low_stock_rows=low_stock_rows,
+        products=products,
+        low_stock_threshold=threshold,
+    )
 
 
 @admin_bp.route("/users")
