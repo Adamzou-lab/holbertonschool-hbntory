@@ -41,7 +41,6 @@ async def test_paginate_all_multiple_pages() -> None:
     async def handler(req: httpx.Request) -> httpx.Response:
         page_calls["count"] += 1
         offset = int(req.url.params.get("offset", 0))
-        limit = int(req.url.params.get("limit", 100))
         # 3 pages de 100, 100, 50 = 250 items
         if offset == 0:
             return httpx.Response(200, json={"products": [{"id": i} for i in range(100)]})
