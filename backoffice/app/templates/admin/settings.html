@@ -10,6 +10,7 @@
 
 <div class="form-card">
   <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="field">
       <label>Seuil de stock faible <span style="font-weight:400;text-transform:none;">(badge "Stock faible" affiché en dessous)</span></label>
       <input type="number" name="low_stock_threshold" min="0" value="{{ low_stock_threshold }}" placeholder="5">

@@ -1,7 +1,7 @@
 from flask import Flask
 
 from app.config import Config
-from app.extensions import db, login_manager, migrate
+from app.extensions import csrf, db, login_manager, migrate
 
 
 def create_app(config_class=Config):
@@ -11,6 +11,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    csrf.init_app(app)
 
     from app.models import User
 
@@ -27,6 +28,11 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp)
     app.register_blueprint(stock_bp)
     app.register_blueprint(internal_bp)
+
+    # Appels serveur-à-serveur (MCP -> Backoffice), authentifiés par
+    # X-Internal-Token (voir app/decorators.py::internal_token_required),
+    # pas par session cookie : pas de csrf_token possible côté client MCP.
+    csrf.exempt(internal_bp)
 
     from app.cli import register_cli
 

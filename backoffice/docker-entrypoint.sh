@@ -8,4 +8,10 @@ set -e
 flask db upgrade
 flask seed
 
-exec flask run --host=0.0.0.0 --port=5000
+# gunicorn plutôt que `flask run` : ce dernier est le serveur de dev de
+# Flask, mono-thread et explicitement déconseillé en dehors du dev local.
+# -w 1 (un seul worker) volontaire : la base SQLite est un fichier unique,
+# plusieurs workers en écriture concurrente dessus risquent des erreurs
+# "database is locked" ; --threads 4 garde de la concurrence pour les
+# appels I/O (résolution produit vers l'API externe) sans ce risque.
+exec gunicorn -w 1 --threads 4 -b 0.0.0.0:5000 wsgi:app

@@ -38,6 +38,11 @@ class TestConfig(Config):
 
     TESTING = True
     SECRET_KEY = "test-secret"
+    # Les tests postent directement via le client de test sans passer par
+    # un vrai formulaire rendu (donc sans csrf_token) — désactiver la
+    # vérification ici, pas en prod (voir Config.WTF_CSRF_ENABLED, absent
+    # = activé par défaut par Flask-WTF).
+    WTF_CSRF_ENABLED = False
     SQLALCHEMY_DATABASE_URI = "sqlite://"
     SQLALCHEMY_ENGINE_OPTIONS = {
         "poolclass": StaticPool,
