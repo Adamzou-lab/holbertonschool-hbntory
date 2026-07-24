@@ -33,7 +33,7 @@ def register_cli(app):
     @app.cli.command("seed")
     def seed():
         """Crée l'admin unique, des branches et du stock de démo."""
-        admin_email = os.environ.get("ADMIN_EMAIL", "admin@stockflow.local")
+        admin_email = os.environ.get("ADMIN_EMAIL", "admin@zaiko.local")
         admin_password = os.environ.get("ADMIN_PASSWORD")
 
         if User.query.filter_by(role=ROLE_ADMIN).first() is None:

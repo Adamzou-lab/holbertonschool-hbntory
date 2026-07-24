@@ -15,7 +15,7 @@ services:
       # host.docker.internal permet à ce conteneur de l'atteindre malgré
       # tout (extra_hosts ci-dessous, nécessaire sur Linux natif).
       PRODUCTS_API_BASE_URL: http://host.docker.internal:5001
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@stockflow.local}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@zaiko.local}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme123}
     volumes:
       - backoffice_db:/data

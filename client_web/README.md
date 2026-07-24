@@ -1,4 +1,4 @@
-# Client Web — StockFlow
+# Client Web — Zaiko
 
 Page publique, anonyme, sans authentification. HTML/CSS/JS pur (pas de framework), REST vers le
 Service IA — cf. [docs/decisions.md](../docs/decisions.md) (Décision 2).
