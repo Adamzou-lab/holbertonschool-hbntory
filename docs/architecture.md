@@ -49,15 +49,19 @@ graph TB
 **Stocké localement (base relationnelle du Backoffice) :**
 - `User` : id, email, password_hash, role, branch_id, is_active
 - `Branch` : id, name
-- `Stock` : id, branch_id, product_id (string), quantity
+- `Stock` : id, branch_id, product_id (entier), quantity
 
 **Jamais stocké localement — vient toujours de l'API Produit externe :**
 - Nom, description, prix, image, catégorie, marque, fournisseur, tags du produit
 
-Le seul lien entre les deux mondes est `product_id` (le `sku` retourné par l'API Produit, ex.
-`HB-LAP-1001` — voir §5). Le Backoffice ne fait jamais d'appel à l'API Produit lui-même dans le
-MVP : il stocke et manipule des `product_id` opaques. C'est le Service IA (via le serveur MCP)
-qui résout un `product_id` en informations produit lisibles.
+Le seul lien entre les deux mondes est `product_id`, un **entier** — l'`id` numérique interne de
+l'API Produit, pas le `sku` (string, ex. `HB-LAP-1001`). Ce choix a été tranché après la rédaction
+initiale de ce document (cf. [decisions.md](decisions.md) "Mise à jour — accès stock du MCP") :
+c'est le serveur MCP qui fait la résolution sku → id ("option C") avant d'appeler le Backoffice —
+le Backoffice ne manipule donc jamais de sku, seulement des entiers opaques. Le Backoffice
+lui-même appelle directement l'API Produit en lecture seule pour l'affichage (résolution
+`product_id` → nom/description, cf. `app/products/client.py`), contrairement à ce qui était
+supposé au moment de la conception initiale.
 
 ## 4. Accès de l'agent IA aux données produit et stock
 
@@ -91,9 +95,12 @@ Repo : https://github.com/hbtn-edu/hbntory-products-api
 
 ### Liste des produits (seed de référence)
 
-Le `sku` est la valeur à utiliser comme `product_id` dans notre table `Stock`.
+Le `sku` ci-dessous est un identifiant lisible fourni par l'API Produit, utile pour repérer un
+produit dans cette table — mais ce n'est **pas** ce qui est stocké dans `Stock.product_id` (voir
+§3 : c'est l'`id` numérique interne de l'API Produit, que le serveur MCP résout à partir du
+`sku` avant d'appeler le Backoffice).
 
-| product_id (sku) | Nom | Catégorie |
+| sku (repère lisible) | Nom | Catégorie |
 |---|---|---|
 | HB-LAP-1001 | Holberton Student Laptop 14 | Laptops |
 | HB-LAP-1002 | Holberton Student Laptop 16 | Laptops |
