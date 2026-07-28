@@ -11,7 +11,7 @@
 
 <div class="grid" style="margin-bottom:28px;">
   {% for row in per_branch %}
-  <a class="card product-card" href="{{ url_for('admin.branch_detail', branch_id=row.branch.id) }}" style="text-decoration:none;color:inherit;display:block;">
+  <a class="card product-card" href="{{ url_for('admin.branch_detail', branch_id=row.branch.id) }}" style="display:block;">
     <div class="card-head" style="margin-bottom:14px;">
       <div class="card-title">{{ row.branch.name }}</div>
       {% if row.low_stock_count %}

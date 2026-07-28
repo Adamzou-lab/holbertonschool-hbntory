@@ -31,6 +31,11 @@
   --shadow: rgba(0,0,0,0.06);
 }
 *{box-sizing:border-box;}
+/* Reset des liens : sans ça, un <a> nu (ex. nom de produit cliquable dans
+   card-title) hérite du bleu/souligné/violet-visité par défaut du
+   navigateur, qui n'a aucun rapport avec notre thème. */
+a{ color:inherit; text-decoration:none; }
+a:visited{ color:inherit; }
 body{
   margin:0; background:var(--bg); color:var(--text);
   font-family:'Manrope',sans-serif;

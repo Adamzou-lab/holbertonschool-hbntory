@@ -3,9 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <title>Connexion — Zaiko</title>
+<script>
+(function () {
+  var theme = localStorage.getItem('zaiko-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body data-theme="dark">
+<body>
 <div class="login-wrap">
   <div class="login-card">
     <div class="logo-mark">Z</div>

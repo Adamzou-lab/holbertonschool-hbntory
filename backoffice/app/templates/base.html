@@ -3,9 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <title>{% block title %}Zaiko{% endblock %} — Zaiko</title>
+<script>
+// Appliqué avant le CSS et avant le rendu du <body> : évite un flash du
+// mauvais thème le temps qu'un script plus tardif ne le corrige. Sur
+// <html> plutôt que <body> car <html> existe déjà à ce stade du parsing.
+(function () {
+  var theme = localStorage.getItem('zaiko-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body data-theme="dark">
+<body>
 <div class="app">
 
   <aside class="sidebar">
@@ -59,9 +68,13 @@
 
 <script>
 document.getElementById('themeToggle')?.addEventListener('click', () => {
-  const body = document.body;
-  const isDark = body.getAttribute('data-theme') === 'dark';
-  body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  // Persisté ici : sans ça, la prochaine action (qui recharge la page en
+  // SSR) repartirait sur le thème par défaut, ce qui était le bug signalé.
+  localStorage.setItem('zaiko-theme', next);
 });
 </script>
 </body>
