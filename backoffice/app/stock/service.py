@@ -214,6 +214,59 @@ def stock_by_product(product_id):
     ]
 
 
+def get_all_stock():
+    """Toutes les lignes de stock, toutes branches confondues, triées par
+    branche puis produit — pour l'export CSV global de l'admin (lecture
+    seule, cf. dashboard_overview ci-dessous)."""
+    return (
+        db.session.query(Stock, Branch)
+        .join(Branch, Stock.branch_id == Branch.id)
+        .order_by(Branch.name, Stock.product_id)
+        .all()
+    )
+
+
+def dashboard_overview(low_stock_threshold):
+    """Vue d'ensemble en lecture seule pour l'admin (ajouté hors MVP
+    initial) : jamais de modification depuis cet écran, cf. mvp.md
+    "Aucune gestion de stock côté admin" — uniquement de la visibilité
+    cross-branches, ce que l'admin n'a actuellement aucun moyen de voir.
+
+    Retourne (par_branche, alertes_stock_faible) :
+    - par_branche : une entrée par Branch, avec nombre de lignes de stock,
+      quantité totale et nombre de lignes sous le seuil.
+    - alertes_stock_faible : toutes les lignes sous le seuil, toutes
+      branches confondues, triées par quantité croissante (les plus
+      critiques en premier).
+    """
+    branches = Branch.query.order_by(Branch.name).all()
+    per_branch = []
+    low_stock_rows = []
+
+    for branch in branches:
+        rows = Stock.query.filter_by(branch_id=branch.id).all()
+        low_rows = [r for r in rows if r.quantity <= low_stock_threshold]
+        per_branch.append(
+            {
+                "branch": branch,
+                "product_count": len(rows),
+                "total_quantity": sum(r.quantity for r in rows),
+                "low_stock_count": len(low_rows),
+            }
+        )
+        low_stock_rows.extend(
+            {
+                "branch": branch,
+                "product_id": r.product_id,
+                "quantity": r.quantity,
+            }
+            for r in low_rows
+        )
+
+    low_stock_rows.sort(key=lambda r: r["quantity"])
+    return per_branch, low_stock_rows
+
+
 def check_shopping_list(items):
     """Pour une liste [{product_id, quantity}], calcule quelle(s) branche(s)
     peuvent servir la commande.

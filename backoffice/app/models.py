@@ -156,6 +156,54 @@ class StockMovement(db.Model):
         )
 
 
+ADMIN_ACTION_CREATED = "user_created"
+ADMIN_ACTION_UPDATED = "user_updated"
+ADMIN_ACTION_ACTIVATED = "user_activated"
+ADMIN_ACTION_DEACTIVATED = "user_deactivated"
+ADMIN_ACTION_TYPES = (
+    ADMIN_ACTION_CREATED,
+    ADMIN_ACTION_UPDATED,
+    ADMIN_ACTION_ACTIVATED,
+    ADMIN_ACTION_DEACTIVATED,
+)
+
+
+class AdminAction(db.Model):
+    """Journal des actions d'admin sur les comptes utilisateurs (ajouté
+    hors MVP initial, cf. docs/mvp.md) : qui a créé/modifié/activé/
+    désactivé quel compte, et quand. Traçabilité pure — jamais consulté
+    pour autoriser ou refuser quoi que ce soit (contrairement à
+    role_required), juste pour répondre à "qui a fait quoi" en cas de
+    besoin."""
+
+    __tablename__ = "admin_actions"
+    __table_args__ = (
+        db.CheckConstraint(
+            "action_type IN ("
+            "'user_created', 'user_updated', "
+            "'user_activated', 'user_deactivated'"
+            ")",
+            name="ck_admin_actions_type",
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    actor_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False
+    )
+    target_user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False
+    )
+    action_type = db.Column(db.String(30), nullable=False)
+    created_at = db.Column(db.DateTime, default=_utcnow)
+
+    actor = db.relationship("User", foreign_keys=[actor_id])
+    target_user = db.relationship("User", foreign_keys=[target_user_id])
+
+    def __repr__(self):
+        return f"<AdminAction {self.action_type} on #{self.target_user_id}>"
+
+
 class AppSetting(db.Model):
     """Paramètres techniques éditables par l'admin sans redéploiement
     (ajouté hors MVP initial, cf. docs/mvp.md) : clé/valeur simple, lus via

@@ -173,11 +173,25 @@ def history():
 def product_detail(product_id):
     product = get_product(product_id)
     quantity = service.get_quantity(current_user.branch_id, product_id)
+    # Disponibilité dans les autres branches : purement informatif, pour
+    # décider où demander un transfert avant de le faire — le common user
+    # ne peut transférer que depuis SA branche (app/stock/service.py::
+    # transfer_stock), il ne peut pas "tirer" du stock d'une autre branche
+    # lui-même.
+    availability = [
+        {
+            "branch": branch,
+            "quantity": service.get_quantity(branch.id, product_id),
+        }
+        for branch in Branch.query.order_by(Branch.name).all()
+        if branch.id != current_user.branch_id
+    ]
     return render_template(
         "stock/product_detail.html",
         product=product,
         product_id=product_id,
         quantity=quantity,
+        availability=availability,
     )
 
 

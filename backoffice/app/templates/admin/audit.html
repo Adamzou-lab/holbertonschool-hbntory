@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Journal admin{% endblock %}
+{% block content %}
+<h1 class="page-title">Journal des actions admin</h1>
+<div class="page-sub">Les {{ actions|length }} dernières actions sur les comptes utilisateurs.</div>
+
+{% if not actions %}
+<div class="empty-state">Aucune action enregistrée pour l'instant.</div>
+{% else %}
+{% set label = {
+  'user_created': 'Compte créé',
+  'user_updated': 'Compte modifié',
+  'user_activated': 'Compte réactivé',
+  'user_deactivated': 'Compte désactivé',
+} %}
+{% for a in actions %}
+<div class="user-row">
+  <span class="status-tag {{ 'inactive' if a.action_type == 'user_deactivated' else 'active' }}">
+    {{ label[a.action_type] }}
+  </span>
+  <span>{{ a.target_user.username if a.target_user else 'Compte #' ~ a.target_user_id }}</span>
+  <span class="page-sub" style="margin:0;">par {{ a.actor.username if a.actor else '—' }}</span>
+  <span class="page-sub" style="margin:0;">{{ a.created_at.strftime('%d/%m/%Y %H:%M') if a.created_at else '' }}</span>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

@@ -10,6 +10,7 @@
 
 <div class="form-card">
   <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="field">
       <label>Email <span style="font-weight:400;text-transform:none;">(sert à se connecter)</span></label>
       <input type="email" name="email" value="{{ user.email if user else '' }}" required>

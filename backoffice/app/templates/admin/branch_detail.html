@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ branch.name }}{% endblock %}
+{% block content %}
+<a class="btn-secondary" href="{{ url_for('admin.dashboard') }}" style="margin-bottom:16px;display:inline-flex;">← Retour à la vue d'ensemble</a>
+
+<h1 class="page-title">{{ branch.name }} — détail du stock</h1>
+<div class="page-sub">Lecture seule — aucune action possible depuis cet écran.</div>
+
+<div class="toolbar">
+  <div class="count-pill">{{ stocks|length }} produit(s) en stock</div>
+</div>
+
+{% if not stocks %}
+<div class="empty-state">Aucun produit en stock pour cette branche.</div>
+{% else %}
+<div class="grid">
+  {% for s in stocks %}
+  {% set product = products.get(s.product_id) %}
+  <div class="card product-card">
+    <div class="card-head">
+      <div>
+        <div class="card-title">{{ product.name if product else 'Produit #' ~ s.product_id }}</div>
+        <div class="card-id">#{{ s.product_id }}</div>
+      </div>
+      {% if product and product.category %}
+      <span class="pill">{{ product.category }}</span>
+      {% endif %}
+    </div>
+    {% if s.quantity <= low_stock_threshold %}
+    <span class="badge-low">Stock faible</span>
+    {% endif %}
+    <div class="qty-row">
+      <span class="qty-num">{{ s.quantity }}</span>
+      <span class="qty-label">en stock</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

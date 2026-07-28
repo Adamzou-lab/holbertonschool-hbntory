@@ -20,6 +20,7 @@
   <div class="user-row-actions">
     <a class="btn-secondary" href="{{ url_for('admin.user_edit', user_id=u.id) }}">Modifier</a>
     <form method="post" action="{{ url_for('admin.user_toggle_active', user_id=u.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn-danger-text" type="submit">{{ 'Réactiver' if not u.is_active else 'Désactiver' }}</button>
     </form>
   </div>

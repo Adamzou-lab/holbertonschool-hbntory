@@ -58,7 +58,7 @@ services:
       - "8080:8080"
     environment:
       LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
-      LLM_MODEL: ${LLM_MODEL:-claude-3-5-sonnet-latest}
+      LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5}
       # Lues directement par PydanticAI depuis l'environnement standard du
       # provider choisi (une seule est vraiment nécessaire selon LLM_PROVIDER)
       # — valeur réelle dans .env (jamais commitée), vide par défaut ici.

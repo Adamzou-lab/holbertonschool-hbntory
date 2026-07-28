@@ -36,8 +36,11 @@ base doivent exister avant tout le reste.
 
 ## Priorité 3 — optionnel si le temps le permet
 
-- Questions multi-produits complexes ("si je veux 3 X, 2 Y et 4 Z, quelle(s) branche(s)
-  visiter ?") nécessitant que l'agent croise plusieurs appels de tools et agrège le résultat.
+- ~~Questions multi-produits complexes~~ **fait** (tool MCP `check_shopping_list`,
+  implémenté par Erwan) : "si je veux 3 X, 2 Y et 4 Z, quelle(s) branche(s) visiter ?"
+  — s'appuie sur `app/stock/service.py::check_shopping_list` côté Backoffice via
+  `/api/internal/stock/shopping-list`, testé côté MCP et `ai_service`
+  (`test_integration_mcp.py`).
 - Amélioration du style visuel du Backoffice et du client web (le sujet précise que le visuel
   n'est pas la priorité).
 - Recherche/filtre sur la liste de produits en stock.
@@ -74,6 +77,20 @@ rien stocker — aucune ne viole la règle d'or (§ci-dessous).
 - **Paramètres admin (config technique)** : seuil de stock faible et
   surcharge de l'URL de l'API Produit, éditables à chaud sans redéploiement
   (table `app_settings`).
+- **Dashboard admin** (2026-07-24) : vue d'ensemble cross-branches en
+  lecture seule (`/admin/dashboard`, nouvel écran d'accueil de l'admin) —
+  nombre de produits référencés et quantité totale par branche, plus la
+  liste des lignes sous le seuil de stock faible toutes branches
+  confondues. Comble un vide réel (l'admin n'avait jusque-là aucune
+  visibilité sur le stock, seulement la gestion des users) sans violer
+  "aucune gestion de stock côté admin" : uniquement de la lecture, aucune
+  action de modification sur cet écran.
+- **Disponibilité cross-branches sur la fiche produit** (2026-07-24) :
+  `/stock/product/<id>` affiche désormais, sous les infos produit, la
+  quantité disponible dans chaque autre branche — purement informatif
+  (le common user ne peut transférer que depuis sa propre branche, cf.
+  `transfer_stock`), pour décider où demander un transfert avant de le
+  faire plutôt qu'à l'aveugle.
 
 ## Hors scope (explicitement exclu par le sujet)
 

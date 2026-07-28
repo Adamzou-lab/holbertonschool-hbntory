@@ -1,3 +1,4 @@
+import hmac
 from functools import wraps
 
 from flask import abort, current_app, request
@@ -34,7 +35,9 @@ def internal_token_required(view):
     def wrapped(*args, **kwargs):
         expected = current_app.config["BACKOFFICE_INTERNAL_TOKEN"]
         provided = request.headers.get("X-Internal-Token")
-        if not provided or provided != expected:
+        # compare_digest plutôt que != : évite qu'un attaquant déduise le
+        # token caractère par caractère en mesurant le temps de réponse.
+        if not provided or not hmac.compare_digest(provided, expected):
             abort(403)
         return view(*args, **kwargs)
 
