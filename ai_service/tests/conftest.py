@@ -33,6 +33,11 @@ def _set_fake_llm_keys(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-used")
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key-not-used")
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    monkeypatch.setenv("AI_INTERNAL_TOKEN", "test-internal-secret")
+    # Clear settings cache so internal_token is picked up
+    from src.config import get_settings
+    if hasattr(get_settings, "cache_clear"):
+        get_settings.cache_clear()
 
 
 class FakeMCPToolset:
