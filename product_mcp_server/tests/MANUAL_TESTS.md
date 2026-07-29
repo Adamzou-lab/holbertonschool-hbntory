@@ -1,4 +1,4 @@
-# Manual Tests — Serveur MCP Produit HBntory
+# Manual Tests - Serveur MCP Produit HBntory
 
 Ces tests se font **avec MCP Inspector** (UI web fournie par le SDK MCP).
 Ils valident que les outils sont accessibles, leurs schemas corrects, et
@@ -107,7 +107,7 @@ Appeler `list_products` cote MCP Inspector.
 
 Ces outils lisent le catalogue complet (via l'API Produit) et le stock
 (via l'API interne Backoffice) et ne font que de l'agregation en memoire
-— aucune ecriture, aucun acces SQL direct.
+- aucune ecriture, aucun acces SQL direct.
 
 ### 5.1 `analyze_catalog_by_category`
 
@@ -134,14 +134,14 @@ Ces outils lisent le catalogue complet (via l'API Produit) et le stock
 
 - Appeler sans parametres.
 - **Attendu** : une entree par fournisseur (nb produits, categories,
-  prix moyen, delai, score de fiabilite) — pas de jugement qualitatif
+  prix moyen, delai, score de fiabilite) - pas de jugement qualitatif
   automatique dans le texte renvoye.
 
 ### 5.5 `estimate_catalog_stock_value`
 
 - Appeler sans parametres.
 - **Attendu** : valeur totale au **prix catalogue** (pas un cout d'achat
-  ni une marge — verifier que la reponse le precise), repartie par
+  ni une marge - verifier que la reponse le precise), repartie par
   categorie et par branche.
 
 ### 5.6 `assess_storage_complexity`
@@ -172,7 +172,7 @@ Ces outils lisent le catalogue complet (via l'API Produit) et le stock
 ## 6. Tests des outils Forecast (4 tools, P2)
 
 Donnees issues d'un provider **fixture** par defaut (pas d'historique
-reel cote Backoffice) — chaque reponse porte `calculation_basis`.
+reel cote Backoffice) - chaque reponse porte `calculation_basis`.
 
 ### 6.1 `get_stock_history`
 
@@ -184,7 +184,7 @@ reel cote Backoffice) — chaque reponse porte `calculation_basis`.
 
 - Appeler avec `product_id="1", days=90`.
 - **Attendu** : `direction` (rising/falling/stable), `data_quality`
-  (low/medium/high) — pas de "confidence" numerique fabriquee.
+  (low/medium/high) - pas de "confidence" numerique fabriquee.
 - Avec un produit sans historique suffisant (< 3 points) : `data_quality`
   doit tomber a "low", jamais une extrapolation hasardeuse presentee
   comme fiable.
@@ -205,10 +205,10 @@ reel cote Backoffice) — chaque reponse porte `calculation_basis`.
   `cycles_completed < 2` : `has_pattern=false` et limitation
   "insufficient_data" explicite plutot qu'un pattern invente.
 
-## 7. Tests des outils Margin (4 tools, P3 — usage interne uniquement)
+## 7. Tests des outils Margin (4 tools, P3 - usage interne uniquement)
 
 **Toutes les reponses de cette section doivent porter
-`data_origin="synthetic_demo"`** — aucune vraie donnee de vente
+`data_origin="synthetic_demo"`** - aucune vraie donnee de vente
 n'existe (pas de POS/ERP connecte). A verifier systematiquement.
 
 ### 7.1 `compute_product_margin`

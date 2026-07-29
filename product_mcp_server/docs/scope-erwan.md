@@ -1,4 +1,4 @@
-# Perimetre Erwan — `product_mcp_server/` (Bloc 2)
+# Perimetre Erwan - `product_mcp_server/` (Bloc 2)
 
 Document d'engagement de perimetre. Tout commit sur `erwan` doit etre
 verifie contre cette liste.

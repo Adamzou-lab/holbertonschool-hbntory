@@ -1,7 +1,7 @@
-# Client Web — Zaiko
+# Client Web - Zaiko
 
 Page publique, anonyme, sans authentification. HTML/CSS/JS pur (pas de framework), REST vers le
-Service IA — cf. [docs/decisions.md](../docs/decisions.md) (Décision 2).
+Service IA - cf. [docs/decisions.md](../docs/decisions.md) (Décision 2).
 
 ## Lancer en local
 
@@ -22,7 +22,7 @@ python3 -m http.server 8000
 - « Si je veux 3 HB-LAP-1001, 2 HB-MON-2101 et 4 HB-KBD-4101, quelle(s) branche(s) visiter ? »
 
 Ces exemples viennent du sujet (Task 6). Tant que `ai_service/` est en mode mock (cf. son
-README), les réponses sont approximatives — elles seront correctes une fois l'agent réel
+README), les réponses sont approximatives - elles seront correctes une fois l'agent réel
 d'Erwan branché dessus.
 
 ## Ce qui est géré

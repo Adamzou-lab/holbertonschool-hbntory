@@ -3,7 +3,7 @@
 Service backend indépendant qui répond aux questions des clients (anonymes)
 sur les produits et les stocks HBntory. Fait partie du **Bloc 3** (IA + client web).
 
-> **Bloc 3 — Service IA.** Le client web est géré par Adam, ce service expose
+> **Bloc 3 - Service IA.** Le client web est géré par Adam, ce service expose
 > uniquement l'endpoint REST consommé par ce client.
 
 ## Architecture (rappel)
@@ -113,13 +113,13 @@ docker run --rm -p 8080:8080 \
 | Contenu d'une branche | `list_branches` + `get_branch_inventory` |
 | Shopping list multi-produits | `get_product` (chaque item) + `check_shopping_list` |
 
-Hors périmètre (refus explicite) : météo, politique, conseils, etc. — voir `src/prompts.py` REGLE 2.
+Hors périmètre (refus explicite) : météo, politique, conseils, etc. - voir `src/prompts.py` REGLE 2.
 
 ## Garanties anti-hallucination
 
 Le system prompt impose **5 règles** (voir `src/prompts.py`) :
 
-1. **Faits réels uniquement** via les outils MCP — jamais d'invention.
+1. **Faits réels uniquement** via les outils MCP - jamais d'invention.
 2. **Hors périmètre** = refus explicite.
 3. **Transparence** sur les produits inexistants.
 4. **Langue** de la question respectée.
@@ -176,7 +176,7 @@ ai_service/
 - Nécessite un serveur MCP (Bloc 2) démarré sur `MCP_SERVER_URL` au lancement.
 - Clé API LLM obligatoire au runtime (sinon `UserError` à la construction de l'agent).
 - Pas de streaming : la réponse est complète en un bloc.
-- Pas de mémoire : un client ne peut pas enchaîner 2 questions dans un même "fil" — chaque appel est indépendant.
+- Pas de mémoire : un client ne peut pas enchaîner 2 questions dans un même "fil" - chaque appel est indépendant.
 
 ## Dépendances externes
 

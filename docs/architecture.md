@@ -1,6 +1,6 @@
-# Architecture — Système de gestion de stock multi-branches
+# Architecture - Système de gestion de stock multi-branches
 
-Document de conception (Task 0). Aucune implémentation ici — objectif : que n'importe quelle
+Document de conception (Task 0). Aucune implémentation ici - objectif : que n'importe quelle
 équipe puisse comprendre le design sans lire le code.
 
 ## 1. Services et responsabilités
@@ -8,7 +8,7 @@ Document de conception (Task 0). Aucune implémentation ici — objectif : que n
 | Service | Responsabilité |
 |---|---|
 | Backoffice | Interface interne authentifiée (SSR Flask/Jinja2). Auth + rôles (admin, common). Gestion des utilisateurs (admin) et du stock par branche (common user). |
-| Base relationnelle | Stocke `User`, `Branch`, `Stock`. Ne stocke **aucune** donnée produit (nom, prix, description, image) — uniquement `product_id`. |
+| Base relationnelle | Stocke `User`, `Branch`, `Stock`. Ne stocke **aucune** donnée produit (nom, prix, description, image) - uniquement `product_id`. |
 | API Produit | Service externe fourni en Docker, lecture seule. Source unique des données produit. Repo : [hbntory-products-api](https://github.com/hbtn-edu/hbntory-products-api). |
 | Serveur MCP Produit | Implémenté par l'équipe. Bridge entre le Service IA et l'API Produit. Expose des tools MCP : `list_products`, `get_product`, + un tool d'accès stock (lecture). |
 | Service IA | Backend indépendant du Backoffice. Contient l'agent (ou les agents) qui répond aux questions en langage naturel, via les tools du serveur MCP. |
@@ -18,17 +18,17 @@ Document de conception (Task 0). Aucune implémentation ici — objectif : que n
 
 ```mermaid
 graph TB
-    subgraph Bloc1["Bloc 1 — Backoffice + BDD"]
+    subgraph Bloc1["Bloc 1 - Backoffice + BDD"]
         BO["Backoffice<br/>SSR Flask/Jinja2, authentifié"]
         DB[("Base relationnelle<br/>User, Branch, Stock")]
     end
 
-    subgraph Bloc2["Bloc 2 — MCP + API Produit"]
+    subgraph Bloc2["Bloc 2 - MCP + API Produit"]
         MCP["Serveur MCP Produit<br/>tools: list_products, get_product, stock"]
         API["API Produit (externe)<br/>lecture seule, Docker"]
     end
 
-    subgraph Bloc3["Bloc 3 — IA + Client web"]
+    subgraph Bloc3["Bloc 3 - IA + Client web"]
         IA["Service IA<br/>agent(s) langage naturel"]
         WEB["Client web<br/>page publique, anonyme"]
     end
@@ -44,26 +44,94 @@ graph TB
 > équipe : soit le serveur MCP appelle une route de lecture exposée par le Backoffice, soit il
 > lit directement la base relationnelle (cf. [decisions.md](decisions.md) pour l'arbitrage).
 
-## 3. Flux de données : local vs externe
+## 3. Schéma de la base de données
+
+Trois familles d'information, jamais mélangées : qui (`User`), où (`Branch`), combien
+(`Stock`). Le "quoi" (le produit lui-même) n'y figure jamais - voir §4.
+
+```mermaid
+erDiagram
+    BRANCH ||--o{ USER : "compte"
+    BRANCH ||--o{ STOCK : "possède"
+    BRANCH ||--o{ STOCK_MOVEMENT : "concerne"
+    USER ||--o{ STOCK_MOVEMENT : "effectue"
+    USER ||--o{ ADMIN_ACTION : "auteur (actor)"
+    USER ||--o{ ADMIN_ACTION : "cible (target)"
+
+    BRANCH {
+        int id PK
+        string name UK
+    }
+    USER {
+        int id PK
+        string email UK
+        string username
+        string password_hash
+        string role "admin | common"
+        int branch_id FK "nullable, requis si role=common"
+        bool is_active "soft-delete"
+        datetime created_at
+        datetime updated_at
+    }
+    STOCK {
+        int id PK
+        int branch_id FK
+        int product_id "id externe API Produit, jamais de nom/prix"
+        int quantity "CHECK >= 0"
+        datetime created_at
+        datetime updated_at
+    }
+    STOCK_MOVEMENT {
+        int id PK
+        int branch_id FK
+        int product_id
+        string movement_type "add | remove | transfer_in | transfer_out"
+        int quantity "CHECK > 0"
+        int related_branch_id FK "nullable, renseigné pour un transfert"
+        int user_id FK
+        datetime created_at
+    }
+    ADMIN_ACTION {
+        int id PK
+        int actor_id FK "admin qui agit"
+        int target_user_id FK "compte concerné"
+        string action_type "created | updated | activated | deactivated"
+        datetime created_at
+    }
+    APP_SETTING {
+        string key PK
+        string value "nullable"
+    }
+```
+
+Contraintes clés (détail dans les modèles SQLAlchemy, `backoffice/app/models.py`) :
+- `Stock` : une seule ligne par `(branch_id, product_id)` (contrainte d'unicité), quantité
+  jamais négative (CHECK côté base, en plus de la validation applicative).
+- `User.branch_id` : nullable au niveau base (l'admin n'a pas de branche), mais requis par
+  l'application dès que `role="common"`.
+- `AppSetting` est une table clé/valeur autonome, sans relation avec les autres - paramètres
+  admin modifiables à chaud (seuil de stock faible, URL de l'API Produit).
+
+## 4. Flux de données : local vs externe
 
 **Stocké localement (base relationnelle du Backoffice) :**
 - `User` : id, email, password_hash, role, branch_id, is_active
 - `Branch` : id, name
 - `Stock` : id, branch_id, product_id (entier), quantity
 
-**Jamais stocké localement — vient toujours de l'API Produit externe :**
+**Jamais stocké localement - vient toujours de l'API Produit externe :**
 - Nom, description, prix, image, catégorie, marque, fournisseur, tags du produit
 
-Le seul lien entre les deux mondes est `product_id`, un **entier** — l'`id` numérique interne de
+Le seul lien entre les deux mondes est `product_id`, un **entier** - l'`id` numérique interne de
 l'API Produit, pas le `sku` (string, ex. `HB-LAP-1001`). Ce choix a été tranché après la rédaction
-initiale de ce document (cf. [decisions.md](decisions.md) "Mise à jour — accès stock du MCP") :
-c'est le serveur MCP qui fait la résolution sku → id ("option C") avant d'appeler le Backoffice —
+initiale de ce document (cf. [decisions.md](decisions.md) "Mise à jour - accès stock du MCP") :
+c'est le serveur MCP qui fait la résolution sku → id ("option C") avant d'appeler le Backoffice -
 le Backoffice ne manipule donc jamais de sku, seulement des entiers opaques. Le Backoffice
 lui-même appelle directement l'API Produit en lecture seule pour l'affichage (résolution
 `product_id` → nom/description, cf. `app/products/client.py`), contrairement à ce qui était
 supposé au moment de la conception initiale.
 
-## 4. Accès de l'agent IA aux données produit et stock
+## 5. Accès de l'agent IA aux données produit et stock
 
 1. L'utilisateur pose une question en langage naturel sur le Client web.
 2. Le Client web envoie la question au Service IA (REST, voir decisions.md).
@@ -71,11 +139,11 @@ supposé au moment de la conception initiale.
    - Besoin d'infos produit (nom, prix, existence...) → `list_products` / `get_product` sur le
      serveur MCP, qui interroge l'API Produit.
    - Besoin d'infos stock (quelle branche a X en stock, quantité disponible...) → tool stock du
-     serveur MCP, qui lit la base relationnelle (via le Backoffice ou en direct — à trancher).
+     serveur MCP, qui lit la base relationnelle (via le Backoffice ou en direct - à trancher).
 4. L'agent compose la réponse à partir des résultats des tools uniquement. S'il n'a pas assez
    d'information via les tools, il doit le dire explicitement plutôt que d'inventer une réponse.
 
-## 5. API Produit — contrat externe
+## 6. API Produit - contrat externe
 
 Repo : https://github.com/hbtn-edu/hbntory-products-api
 
@@ -86,7 +154,7 @@ Repo : https://github.com/hbtn-edu/hbntory-products-api
   - `GET /health`
   - `GET /api/v1/products`
   - `GET /api/v1/products/search?q=keyword`
-  - `GET /api/v1/products/{sku}` (ex. : `HB-LAP-1001` — identifiant = `sku`, pas l'`id` numérique interne)
+  - `GET /api/v1/products/{sku}` (ex. : `HB-LAP-1001` - identifiant = `sku`, pas l'`id` numérique interne)
   - `GET /api/v1/categories`
   - `GET /api/v1/suppliers`
 - Données produit : identifiants, noms, descriptions, marques, catégories, fournisseurs, prix, tags.
@@ -96,8 +164,8 @@ Repo : https://github.com/hbtn-edu/hbntory-products-api
 ### Liste des produits (seed de référence)
 
 Le `sku` ci-dessous est un identifiant lisible fourni par l'API Produit, utile pour repérer un
-produit dans cette table — mais ce n'est **pas** ce qui est stocké dans `Stock.product_id` (voir
-§3 : c'est l'`id` numérique interne de l'API Produit, que le serveur MCP résout à partir du
+produit dans cette table - mais ce n'est **pas** ce qui est stocké dans `Stock.product_id` (voir
+§4 : c'est l'`id` numérique interne de l'API Produit, que le serveur MCP résout à partir du
 `sku` avant d'appeler le Backoffice).
 
 | sku (repère lisible) | Nom | Catégorie |
@@ -148,5 +216,5 @@ produit dans cette table — mais ce n'est **pas** ce qui est stocké dans `Stoc
 
 ## Voir aussi
 
-- [decisions.md](decisions.md) — choix de communication (REST/SSR, REST vs WebSocket, transport MCP)
-- [mvp.md](mvp.md) — définition du MVP
+- [decisions.md](decisions.md) - choix de communication (REST/SSR, REST vs WebSocket, transport MCP)
+- [mvp.md](mvp.md) - définition du MVP

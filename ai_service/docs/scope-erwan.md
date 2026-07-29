@@ -1,4 +1,4 @@
-# Perimetre Erwan — `ai_service/` (Bloc 3 cote IA)
+# Perimetre Erwan - `ai_service/` (Bloc 3 cote IA)
 
 Document d'engagement de perimetre. Tout commit sur `erwan` doit etre
 verifie contre cette liste.

@@ -1,4 +1,4 @@
-# Manual Tests — Service IA HBntory
+# Manual Tests - Service IA HBntory
 
 Tests bout-en-bout : serveur MCP (Bloc 2) + Service IA (Bloc 3) + un vrai provider LLM.
 Ces tests **nécessitent une clé API** (`ANTHROPIC_API_KEY` par défaut, ou autre).
@@ -52,10 +52,10 @@ Attendu : `status: "ok"`, `service: "hbntory-ai-service"`, `mcp_server_url` et
 curl -s http://localhost:8080/tools | jq
 ```
 
-Attendu : tableau de **25 outils** — les 7 d'origine (inventaire :
+Attendu : tableau de **25 outils** - les 7 d'origine (inventaire :
 `list_products`, `get_product`, `search_products`, `list_branches`,
 `get_product_availability`, `get_branch_inventory`, `check_shopping_list`)
-plus 18 ajoutés depuis (10 analytics, 4 forecast, 4 margin — voir §3.5 à
+plus 18 ajoutés depuis (10 analytics, 4 forecast, 4 margin - voir §3.5 à
 3.7). `/tools` liste tout ce que le MCP expose ; chaque agent spécialisé
 ne voit ensuite qu'un sous-ensemble filtré (allowlist par intent, voir
 `ai_service/docs/agents.md`).
@@ -144,11 +144,11 @@ Attendu :
 - `tool_calls` contient `forecast_stockout_and_reorder` (et probablement
   `get_stock_history`/`analyze_stock_trend` en amont).
 - `answer` mentionne explicitement l'incertitude (`data_quality`,
-  hypothèses) — jamais une date affirmée sans nuance.
+  hypothèses) - jamais une date affirmée sans nuance.
 
-### 3.7 Margin — endpoint interne uniquement (`/internal/query`)
+### 3.7 Margin - endpoint interne uniquement (`/internal/query`)
 
-Nécessite `AI_INTERNAL_TOKEN` configuré (`.env`, absent par défaut —
+Nécessite `AI_INTERNAL_TOKEN` configuré (`.env`, absent par défaut -
 sans lui l'endpoint renvoie 503 volontairement, voir §4.5).
 
 ```bash
@@ -163,7 +163,7 @@ Attendu :
 - `data_origins` contient `"synthetic_demo"`.
 - `answer` rappelle explicitement que ce sont des données synthétiques
   de démonstration, pas de vraies ventes.
-- **Vérifier aussi que `/query` (public) refuse cette même question** —
+- **Vérifier aussi que `/query` (public) refuse cette même question** -
   doit répondre que les analyses de rentabilité sont réservées à l'usage
   interne, sans jamais exécuter `compute_product_margin` côté public.
 
@@ -218,7 +218,7 @@ s'apercevoir de la coupure selon le timeout MCP configuré.)
 ### 4.5 `/internal/query` sans jeton configuré
 
 Sans `AI_INTERNAL_TOKEN` dans l'environnement (cas par défaut du
-`docker-compose.yml` actuel — variable non câblée) :
+`docker-compose.yml` actuel - variable non câblée) :
 
 ```bash
 curl -s -X POST http://localhost:8080/internal/query \
@@ -226,7 +226,7 @@ curl -s -X POST http://localhost:8080/internal/query \
   -d '{"question": "Marge la plus elevee ?"}' -w "\nHTTP %{http_code}\n"
 ```
 
-Attendu : HTTP 503 « Internal endpoint not configured. » — fermé par
+Attendu : HTTP 503 « Internal endpoint not configured. » - fermé par
 défaut plutôt qu'ouvert sans protection (voir `src/security.py`).
 
 ### 4.6 `/internal/query` avec un mauvais jeton

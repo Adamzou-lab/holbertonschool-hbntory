@@ -4,8 +4,8 @@ Serveur MCP (Model Context Protocol) qui sert de **pont** entre le Service IA
 et deux sources de données :
 
 1. **L'API Produit externe** ([hbntory-products-api](https://github.com/hbtn-edu/hbntory-products-api)),
-   fournie en Docker, lecture seule — source unique des informations catalogue.
-2. **L'API interne du Backoffice HBntory**, lecture seule — pour les consultations
+   fournie en Docker, lecture seule - source unique des informations catalogue.
+2. **L'API interne du Backoffice HBntory**, lecture seule - pour les consultations
    de stock (quantités par branche).
 
 > Bloc 2 du projet HBntory. Aucune dépendance vers `backoffice/` (Flask/SQLAlchemy)
@@ -13,7 +13,7 @@ et deux sources de données :
 
 ## Outils MCP exposés (7 au total)
 
-### Produits (3) — via API externe
+### Produits (3) - via API externe
 
 | Tool | Description | Input |
 |---|---|---|
@@ -21,7 +21,7 @@ et deux sources de données :
 | `get_product` | Détail d'un produit (nom, prix, description, etc.) | `product_id: str` (SKU `HB-...` ou numérique `1`) |
 | `search_products` | Recherche textuelle (nom, SKU, description, tags) | `query: str`, `limit?=10` |
 
-### Stock (4, lecture seule) — via API interne Backoffice
+### Stock (4, lecture seule) - via API interne Backoffice
 
 | Tool | Description | Input |
 |---|---|---|
@@ -32,7 +32,7 @@ et deux sources de données :
 
 **Aucun outil n'écrit dans le stock.** Les mutations (add/remove) restent dans
 le Backoffice, derrière authentification + rôles. Justification : le client web
-qui déclenche les appels IA est anonyme, sans session ni rôle — laisser l'IA
+qui déclenche les appels IA est anonyme, sans session ni rôle - laisser l'IA
 muter contournerait toute la sécurité du projet.
 
 ## Option C : normalisation des `product_id`
@@ -43,7 +43,7 @@ deux formes :
 | Forme reçue | Traitement | Sortie (vers API Backoffice) |
 |---|---|---|
 | `"1"` | numérique direct | `1` (int) |
-| `"HB-LAP-1001"` | résolution via API externe | `1` (int) — l'`id` retourné |
+| `"HB-LAP-1001"` | résolution via API externe | `1` (int) - l'`id` retourné |
 | `"hb-lap-1001"` | idem, insensible à la casse | `1` (int) |
 | `"foo"` | refus | – |
 
@@ -90,7 +90,7 @@ docker run --rm -p 8000:8000 \
 - Outils produit (9 cas : filtres, schéma, 404, 500)
 - Outils stock (16 cas : header `X-Internal-Token`, 403, 404, 500, satisfaction partielle / totale)
 
-Les tests utilisent `httpx.MockTransport` — aucune connexion réseau requise.
+Les tests utilisent `httpx.MockTransport` - aucune connexion réseau requise.
 
 ## Tests manuels via MCP Inspector
 
@@ -110,7 +110,7 @@ Voir [`tests/MANUAL_TESTS.md`](tests/MANUAL_TESTS.md).
 
 ## Contrat de l'API interne attendu côté Backoffice
 
-À livrer par Nico (`backoffice/app.py`) — header `X-Internal-Token` requis :
+À livrer par Nico (`backoffice/app.py`) - header `X-Internal-Token` requis :
 
 | Méthode | Path | Réponse |
 |---|---|---|

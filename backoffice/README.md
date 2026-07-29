@@ -1,4 +1,4 @@
-# Backoffice — Zaiko
+# Backoffice - Zaiko
 
 Flask + SQLAlchemy + Flask-Migrate + Flask-Login (SSR Jinja2, cf. [docs/decisions.md](../docs/decisions.md)).
 
@@ -42,7 +42,7 @@ mockup exploratoire qui a servi de base visuelle est conservé dans
 **Hashing des mots de passe : `werkzeug.security` (`generate_password_hash` /
 `check_password_hash`).**
 
-- Par défaut, Werkzeug utilise `scrypt` (ou `pbkdf2:sha256` selon la version installée) — deux
+- Par défaut, Werkzeug utilise `scrypt` (ou `pbkdf2:sha256` selon la version installée) - deux
   fonctions de dérivation de clé conçues spécifiquement pour le stockage de mots de passe : elles
   sont volontairement lentes et paramétrables (coût réglable), et incorporent un sel aléatoire
   généré à chaque hachage.
@@ -56,7 +56,7 @@ mockup exploratoire qui a servi de base visuelle est conservé dans
   raw_password)`, qui recalcule le hash avec le même sel stocké dans `password_hash` et compare
   en temps constant.
 
-**Session** : Flask-Login (cookie de session côté serveur), pas de JWT — le Backoffice est une
+**Session** : Flask-Login (cookie de session côté serveur), pas de JWT - le Backoffice est une
 appli web classique consommée par un navigateur, pas une API tierce. Un `logout()` ou un
 soft-delete (`is_active=False`) invalide immédiatement l'accès (Flask-Login refuse la connexion
 d'un `User` dont `is_active` est `False`, cf. `login_manager.user_loader` dans `app/__init__.py`
@@ -64,6 +64,6 @@ et l'attribut `is_active` du modèle qui masque celui par défaut de `UserMixin`
 
 **Autorisation par rôle** : `app/decorators.py::role_required(role)`, appliqué à chaque route
 sensible (jamais seulement une question d'affichage côté template). Un common user n'agit que sur
-sa propre branche parce que les routes stock utilisent toujours `current_user.branch_id` — jamais
+sa propre branche parce que les routes stock utilisent toujours `current_user.branch_id` - jamais
 un `branch_id` fourni par le client. `same_branch_required` existe en plus pour toute future route
 qui accepterait un `branch_id` externe (défense en profondeur).

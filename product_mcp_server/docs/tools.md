@@ -26,7 +26,7 @@ Les donnees de rentabilite (margin) sont synthetiques (data_origin=synthetic_dem
 | `get_branch_inventory` | `branch_id: int` | `{branch_id, items: [...], total_items}` | API interne Backoffice |
 | `check_shopping_list` | `items: list[{product_id, quantity}]` | `{strategy, branches: [...], recommendation}` | API interne Backoffice |
 
-## Analytics (10) — Phase 1
+## Analytics (10) - Phase 1
 
 | Tool | Input | Output |
 |---|---|---|
@@ -41,7 +41,7 @@ Les donnees de rentabilite (margin) sont synthetiques (data_origin=synthetic_dem
 | `find_overstocked_products` | `threshold_units: int=50`, `limit: 1..50=10` | `{threshold_units, method, products}` |
 | `find_understocked_products` | `threshold_units: int=5`, `limit: 1..50=10`, `category?` | `{threshold_units, category, method, products}` |
 
-## Forecast (4) — Phase 2 (donnees fixture)
+## Forecast (4) - Phase 2 (donnees fixture)
 
 | Tool | Input | Output |
 |---|---|---|
@@ -51,9 +51,9 @@ Les donnees de rentabilite (margin) sont synthetiques (data_origin=synthetic_dem
 | `detect_seasonal_pattern` | `product_id: str`, `days: 90..730=365` | `{product_id, has_pattern, best_period_days?, autocorrelation_at_best_lag?, cycles_completed, peak_months, low_months, data_quality, candidate_periods_days, calculation_basis, limitations}` |
 
 **Valeurs `None`** quand le calcul est impossible (qualite insuffisante, mouvement nul).
-**`data_quality`** = low / medium / high — pas de "confidence" (terme reserve aux statistiques).
+**`data_quality`** = low / medium / high - pas de "confidence" (terme reserve aux statistiques).
 
-## Margin (4) — Phase 3 (donnees synthetiques)
+## Margin (4) - Phase 3 (donnees synthetiques)
 
 | Tool | Input | Output |
 |---|---|---|
