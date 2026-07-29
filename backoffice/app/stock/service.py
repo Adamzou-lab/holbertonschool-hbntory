@@ -19,6 +19,7 @@ from app.models import (
     StockMovement,
     _utcnow,
 )
+from app.products.client import product_exists
 
 
 class StockError(Exception):
@@ -55,6 +56,18 @@ def add_stock(branch_id, product_id, amount, user_id):
     if amount <= 0:
         raise StockError(
             "La quantité à ajouter doit être un entier positif."
+        )
+
+    # Sujet : "Stock operations reference product identifiers that exist in
+    # the external Product API, when applicable". On refuse seulement si
+    # l'API a répondu clairement "non" (product_exists() -> False) ; si
+    # elle est injoignable (-> None), on n'affirme rien et on laisse passer
+    # plutôt que de bloquer une opération de stock critique à cause d'une
+    # dépendance externe en panne — même philosophie de résilience que le
+    # reste de app/products/client.py.
+    if product_exists(product_id) is False:
+        raise StockError(
+            f"Le produit #{product_id} n'existe pas dans le catalogue."
         )
 
     row = _get_or_create_row(branch_id, product_id)

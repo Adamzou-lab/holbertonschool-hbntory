@@ -4,6 +4,8 @@ pas se connecter, admin ne gère pas le stock — plus quelques scénarios
 voisins (rôles inversés, API interne) qui protègent les mêmes limites.
 """
 
+from unittest.mock import Mock, patch
+
 from app.models import Stock
 
 
@@ -150,3 +152,52 @@ def test_happy_path_login_add_view(client, login, common_user_lyon):
     stock_page = client.get("/stock")
     assert b"Produit #1" in stock_page.data
     assert b"10" in stock_page.data
+
+
+def test_add_stock_rejected_for_unknown_product(
+    client, login, common_user_lyon
+):
+    """product_exists() renvoie False quand l'API répond clairement
+    "pas trouvé" (404) — dans ce cas add_stock refuse. Toujours 127.0.0.1:1
+    (injoignable) dans TestConfig d'habitude, donc ce cas précis (API qui
+    répond mais dit non) doit être simulé explicitement.
+    """
+    login("lyon@test.local", "lyonpass")
+
+    fake_response = Mock(status_code=404)
+    with patch(
+        "app.products.client.requests.get", return_value=fake_response
+    ):
+        resp = client.post(
+            "/stock/add",
+            data={"product_id": "999", "quantity": "5"},
+            follow_redirects=True,
+        )
+
+    assert resp.status_code == 200
+    # Jinja échappe l'apostrophe (n&#39;existe) — on cherche sans elle.
+    assert "existe pas dans le catalogue".encode() in resp.data
+    assert Stock.query.filter_by(product_id=999).first() is None
+
+
+def test_add_stock_allowed_when_products_api_unreachable(
+    client, login, common_user_lyon
+):
+    """Quand l'API Produit est injoignable (product_exists() -> None), on
+    ne bloque pas l'opération de stock à cause d'une dépendance externe en
+    panne — c'est le comportement par défaut de TestConfig
+    (PRODUCTS_API_BASE_URL pointe vers un port injoignable), donc ce test
+    documente juste explicitement ce choix.
+    """
+    login("lyon@test.local", "lyonpass")
+
+    resp = client.post(
+        "/stock/add",
+        data={"product_id": "42", "quantity": "3"},
+        follow_redirects=True,
+    )
+
+    assert resp.status_code == 200
+    row = Stock.query.filter_by(product_id=42).first()
+    assert row is not None
+    assert row.quantity == 3
