@@ -7,7 +7,7 @@ d'arrondi sur des valeurs monetaires.
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from ..schemas.margin import (
@@ -49,7 +49,12 @@ def compute_product_margin(
     Renvoie un objet ProductMargin ; ``has_sales_data``/``has_purchase_data``
     permettent de signaler les cas partiels.
     """
-    now = now or datetime.utcnow()
+    # datetime.now(UTC), pas datetime.utcnow() : les events (Sale/Purchase)
+    # sont produits par profitability_fixture.py avec des datetimes "aware"
+    # (datetime.now(UTC)) — comparer un "naive" (utcnow()) à un "aware"
+    # lève TypeError "can't compare offset-naive and offset-aware
+    # datetimes". Confirmé en le déclenchant en direct avant ce fix.
+    now = now or datetime.now(UTC)
     cutoff = now - timedelta(days=period_days)
     rel_sales = [s for s in sales if s.product_id == product_id and s.occurred_at >= cutoff]
     rel_purchases = [p for p in purchases if p.product_id == product_id and p.occurred_at >= cutoff]
@@ -154,7 +159,12 @@ def aggregate_supplier_cost(
 ) -> list[SupplierCostEntry]:
     """Cout total d'achat par fournisseur sur la periode."""
     suppliers_by_id = suppliers_by_id or {}
-    now = now or datetime.utcnow()
+    # datetime.now(UTC), pas datetime.utcnow() : les events (Sale/Purchase)
+    # sont produits par profitability_fixture.py avec des datetimes "aware"
+    # (datetime.now(UTC)) — comparer un "naive" (utcnow()) à un "aware"
+    # lève TypeError "can't compare offset-naive and offset-aware
+    # datetimes". Confirmé en le déclenchant en direct avant ce fix.
+    now = now or datetime.now(UTC)
     cutoff = now - timedelta(days=period_days)
 
     by_supplier: dict[str, dict[str, Decimal | int | None]] = defaultdict(

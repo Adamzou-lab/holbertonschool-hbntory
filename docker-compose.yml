@@ -66,6 +66,9 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       MCP_SERVER_URL: http://mcp:8000/mcp
+      # Protège /internal/query (marge) — vide par défaut = endpoint fermé
+      # (503), jamais ouvert sans protection. Valeur réelle dans .env.
+      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:-}
     depends_on:
       mcp:
         condition: service_healthy
