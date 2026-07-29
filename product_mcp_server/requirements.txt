@@ -1,4 +1,8 @@
-mcp[cli]>=1.2
+# Borne haute indispensable : le SDK mcp 2.0 a supprime le module
+# `mcp.server.fastmcp` (FastMCP renomme en MCPServer), sur lequel repose tout
+# src/ (server.py, errors.py, tools/*). Sans `<2`, pip installe la 2.x et le
+# conteneur crashe au demarrage (ModuleNotFoundError).
+mcp[cli]>=1.2,<2
 httpx>=0.27
 pydantic>=2.6
 pydantic-settings>=2.2

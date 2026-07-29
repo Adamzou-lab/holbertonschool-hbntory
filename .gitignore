@@ -16,6 +16,11 @@ instance/
 .env
 .flaskenv
 
+# Surcharges Compose locales : propres au poste de chaque dev (conflits de
+# ports, chemins, ressources), jamais partagées avec l'équipe.
+docker-compose.override.yml
+docker-compose.override.yaml
+
 # Editors / OS
 .DS_Store
 .vscode/

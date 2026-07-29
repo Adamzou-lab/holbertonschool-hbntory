@@ -36,9 +36,12 @@
   un simple lien externe, pas une fusion des deux apps : le Client Web reste
   public/anonyme, le Backoffice reste séparé (auth + logique métier propres).
   URL de dev — à adapter selon le déploiement (docker-compose, prod...).
+  "localhost" et non "127.0.0.1" : sur un poste de dev, un port-forward de
+  l'IDE peut déjà tenir 127.0.0.1 sur ce port et détourner le lien vers un
+  autre Backoffice (cf. docs/docker.md, § Pièges connus).
 -->
-<a class="login-link" href="http://127.0.0.1:5000/login" target="_blank" rel="noopener noreferrer">Se connecter</a>
+<a class="login-link" href="http://localhost:5000/login" target="_blank" rel="noopener noreferrer">Se connecter</a>
 
-<script src="static/js/app.js?v=2"></script>
+<script src="static/js/app.js?v=3"></script>
 </body>
 </html>
