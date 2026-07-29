@@ -52,9 +52,13 @@ Attendu : `status: "ok"`, `service: "hbntory-ai-service"`, `mcp_server_url` et
 curl -s http://localhost:8080/tools | jq
 ```
 
-Attendu : tableau de **7 outils** (3 produit + 4 stock) :
+Attendu : tableau de **25 outils** — les 7 d'origine (inventaire :
 `list_products`, `get_product`, `search_products`, `list_branches`,
-`get_product_availability`, `get_branch_inventory`, `check_shopping_list`.
+`get_product_availability`, `get_branch_inventory`, `check_shopping_list`)
+plus 18 ajoutés depuis (10 analytics, 4 forecast, 4 margin — voir §3.5 à
+3.7). `/tools` liste tout ce que le MCP expose ; chaque agent spécialisé
+ne voit ensuite qu'un sous-ensemble filtré (allowlist par intent, voir
+`ai_service/docs/agents.md`).
 
 ### 2.3 Swagger UI
 
@@ -113,6 +117,56 @@ Attendu :
 - `answer` propose une ou plusieurs branches avec détail satisfait / manquant.
 - `tool_calls` contient `check_shopping_list` (et probablement `get_product` pour valider les SKU).
 
+### 3.5 Analytics (routage vers l'agent "analytics")
+
+```bash
+curl -s -X POST http://localhost:8080/query \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Quels sont les 3 produits les plus chers du catalogue ?"}' | jq
+```
+
+Attendu :
+- `intent: "analytics"`, `routing_confidence` renseigné.
+- `tool_calls` contient `find_extreme_prices`.
+- `answer` précise que c'est le **prix catalogue**, pas une valeur de
+  stock ni une marge (le system prompt Analytics l'impose).
+
+### 3.6 Forecast (routage vers l'agent "forecast")
+
+```bash
+curl -s -X POST http://localhost:8080/query \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Quand le laptop 14 pouces risque-t-il d'\''etre en rupture ?"}' | jq
+```
+
+Attendu :
+- `intent: "forecast"`.
+- `tool_calls` contient `forecast_stockout_and_reorder` (et probablement
+  `get_stock_history`/`analyze_stock_trend` en amont).
+- `answer` mentionne explicitement l'incertitude (`data_quality`,
+  hypothèses) — jamais une date affirmée sans nuance.
+
+### 3.7 Margin — endpoint interne uniquement (`/internal/query`)
+
+Nécessite `AI_INTERNAL_TOKEN` configuré (`.env`, absent par défaut —
+sans lui l'endpoint renvoie 503 volontairement, voir §4.5).
+
+```bash
+curl -s -X POST http://localhost:8080/internal/query \
+  -H "Content-Type: application/json" \
+  -H "X-Internal-Token: $AI_INTERNAL_TOKEN" \
+  -d '{"question": "Quels sont les produits les plus rentables ?"}' | jq
+```
+
+Attendu :
+- `intent: "margin"`.
+- `data_origins` contient `"synthetic_demo"`.
+- `answer` rappelle explicitement que ce sont des données synthétiques
+  de démonstration, pas de vraies ventes.
+- **Vérifier aussi que `/query` (public) refuse cette même question** —
+  doit répondre que les analyses de rentabilité sont réservées à l'usage
+  interne, sans jamais exécuter `compute_product_margin` côté public.
+
 ## 4. Tests de robustesse
 
 ### 4.1 Question hors périmètre
@@ -161,6 +215,33 @@ Attendu : HTTP 503 « Inventory service temporarily unavailable. »
 (Note : la connexion MCP du Service IA peut mettre quelques secondes à
 s'apercevoir de la coupure selon le timeout MCP configuré.)
 
+### 4.5 `/internal/query` sans jeton configuré
+
+Sans `AI_INTERNAL_TOKEN` dans l'environnement (cas par défaut du
+`docker-compose.yml` actuel — variable non câblée) :
+
+```bash
+curl -s -X POST http://localhost:8080/internal/query \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Marge la plus elevee ?"}' -w "\nHTTP %{http_code}\n"
+```
+
+Attendu : HTTP 503 « Internal endpoint not configured. » — fermé par
+défaut plutôt qu'ouvert sans protection (voir `src/security.py`).
+
+### 4.6 `/internal/query` avec un mauvais jeton
+
+`AI_INTERNAL_TOKEN` configuré, mais header manquant ou incorrect :
+
+```bash
+curl -s -X POST http://localhost:8080/internal/query \
+  -H "Content-Type: application/json" \
+  -H "X-Internal-Token: mauvais-token" \
+  -d '{"question": "Marge la plus elevee ?"}' -w "\nHTTP %{http_code}\n"
+```
+
+Attendu : HTTP 401 « Invalid or missing X-Internal-Token. »
+
 ## 5. Test d'observabilité des tool calls
 
 Vérifier que **chaque** réponse de l'agent qui touche à un fait concret
@@ -181,11 +262,22 @@ Attendu : `>= 1` pour chaque question portant sur l'inventaire.
 
 ## 6. Checklist de validation finale
 
+### Périmètre initial (7 outils, inventaire)
+
 - [ ] `/health` répond 200
-- [ ] `/tools` liste les 7 outils MCP
+- [ ] `/tools` liste les 25 outils MCP (7 inventaire + 18 bonus)
 - [ ] `/query` 4 questions types → réponses grounded + tool_calls présents
 - [ ] Question hors périmètre → refus poli
 - [ ] Produit inexistant → « non trouvé »
 - [ ] Question vide → 422
 - [ ] MCP down → 503
 - [ ] Logs serveur IA : chaque appel de tool est loggué (utile pour la démo)
+
+### Multi-agent et outils bonus (analytics/forecast/margin)
+
+- [ ] Question analytics → `intent: "analytics"`, tool correspondant appelé
+- [ ] Question forecast → `intent: "forecast"`, réponse nuancée (jamais de date affirmée sans hypothèses)
+- [ ] Question margin sur `/query` (public) → refusée, `tool_calls` vide
+- [ ] Question margin sur `/internal/query` avec bon jeton → répond, `data_origins` contient `"synthetic_demo"`
+- [ ] `/internal/query` sans jeton configuré → 503
+- [ ] `/internal/query` avec mauvais jeton → 401
