@@ -43,7 +43,11 @@ async def _load_products_by_id(
         return await paginate_all(
             lambda offset, limit: product_client.list_products(offset=offset, limit=limit),
             page_size=DEFAULT_PAGE_SIZE,
-            results_key="products",
+            # L'API Produit externe renvoie la liste sous "results", pas
+            # "products" (vérifié contre la vraie API : {"count", "results",
+            # "limit", "offset"}) — avec la mauvaise clé ce catalogue était
+            # systématiquement vide, silencieusement.
+            results_key="results",
         )
 
     products, _ = await CATALOG_CACHE.get_or_compute("catalog:full", real_compute)

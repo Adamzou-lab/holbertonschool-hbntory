@@ -48,7 +48,11 @@ async def _load_full_catalog(product_client: ProductClient) -> tuple[list[dict[s
         return await paginate_all(
             lambda offset, limit: product_client.list_products(offset=offset, limit=limit),
             page_size=DEFAULT_PAGE_SIZE,
-            results_key="products",
+            # L'API Produit externe renvoie la liste sous "results", pas
+            # "products" (vérifié contre la vraie API : {"count", "results",
+            # "limit", "offset"}) — avec la mauvaise clé ce catalogue était
+            # systématiquement vide, silencieusement (aucune erreur levée).
+            results_key="results",
         )
 
     value, stale = await CATALOG_CACHE.get_or_compute("catalog:full", compute)
@@ -61,7 +65,13 @@ async def _load_suppliers(product_client: ProductClient) -> tuple[dict[str, dict
             payload = await product_client.list_suppliers()
         except MCPServiceError:
             return {}
-        sup_list = payload.get("suppliers", payload) if isinstance(payload, dict) else payload
+        # Même remarque que _load_full_catalog : la clé réelle est
+        # "results", pas "suppliers". L'ancien fallback `payload.get(
+        # "suppliers", payload)` retombait sur le dict entier (count/
+        # results/limit/offset), puis itérait sur ses clés (des strings)
+        # au lieu des objets fournisseur -> AttributeError au premier
+        # `s.get("id")`. Confirmé en le déclenchant en direct avant fix.
+        sup_list = payload.get("results", []) if isinstance(payload, dict) else payload
         out: dict[str, dict[str, Any]] = {}
         for s in sup_list or []:
             out[s.get("id")] = s
